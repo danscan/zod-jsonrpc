@@ -30,7 +30,7 @@ const server = new Server({
   },
 });
 
-describe('Server', () => {
+describe('Server.request', () => {
   it('handles a normal JSON RPC 2.0 request', async () => {
     const result = await server.request({
       jsonrpc: '2.0',
@@ -125,6 +125,11 @@ describe('Server', () => {
       { jsonrpc: '2.0', id: 1, result: 'Hello, Dan!' },
       { jsonrpc: '2.0', id: 2, result: 'Hello, Andrea!' },
     ]);
+  });
+
+  it('handles string request ids', async () => {
+    const result = await server.request([{ jsonrpc: '2.0', id: '1', method: 'greeting', params: ['Dan'] }]);
+    expect(result).toMatchObject([{ jsonrpc: '2.0', id: '1', result: 'Hello, Dan!' }]);
   });
 });
 
