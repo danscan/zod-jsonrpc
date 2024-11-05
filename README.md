@@ -91,6 +91,10 @@ const jsonRpcServer = new Server({ /* methods */ });
 
 // Simple Bun HTTP server
 Bun.serve({
-  fetch: async (req) => jsonRpcServer.handle(await req.json()),
+  fetch: async (req) => {
+    const jsonRpcRequest = await req.json();
+    const jsonRpcResponse = jsonRpcServer.handle(jsonRpcRequest);
+    return Response.json(jsonRpcResponse);
+  }
 });
 ```
