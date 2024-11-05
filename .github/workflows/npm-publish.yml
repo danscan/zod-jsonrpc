@@ -14,31 +14,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-          registry-url: https://registry.npmjs.org/    
-
-      # Set the version in package.json to match the release tag, without the `v` prefix
-      - name: Set version from tag
-        id: set_version
-        run: |
-          # Remove "v" from the tag, e.g., "v1.0.1" becomes "1.0.1"
-          tag="${GITHUB_REF#refs/tags/}"
-          version="${tag#v}"
-          echo "Updating package.json version to $version"
-          # Use jq to modify package.json in-place
-          jq --arg v "$version" '.version=$v' package.json > tmp.$$.json && mv tmp.$$.json package.json
-          cat package.json  # Confirm the change
-
-      # Commit the version change to the repo
-      - name: Commit version change
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
-          git commit -m "Update version to $version"
-          git push
+          registry-url: https://registry.npmjs.org/
 
       - run: bun install --frozen-lockfile
-
       - run: bun test
 
       - name: Publish to npm
