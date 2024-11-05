@@ -27,6 +27,7 @@ npm add @danscan/zod-jsonrpc
 
 ```typescript
 import { Server, JSONRPC2Error } from '@danscan/zod-jsonrpc';
+import { z } from 'zod';
 
 const server = new Server({
   greet: {
