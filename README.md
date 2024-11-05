@@ -41,7 +41,12 @@ const server = new Server({
     handler: ({ number }) => {
       const isOdd = number % 2 === 1;
       // Just throw a JSONRPC2Error to return an error response
-      if (!isOdd) throw new JSONRPC2Error.InvalidParamsWithData({ additionalInfo: 'Number must be odd', number });
+      if (!isOdd) {
+        throw new JSONRPC2Error.InvalidParamsWithData({
+          additionalInfo: 'Number must be odd',
+          number,
+        });
+      }
       return true;
     },
   },
