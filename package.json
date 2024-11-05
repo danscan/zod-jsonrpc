@@ -1,5 +1,17 @@
 {
-  "name": "zod-jsonrpc",
+  "name": "@danscan/zod-jsonrpc",
+  "description": "Create JSON-RPC 2.0-compliant servers that use Zod to validate requests and responses.",
+  "keywords": [
+    "json-rpc",
+    "jsonrpc",
+    "jsonrpc 2.0",
+    "jsonrpc2",
+    "server",
+    "http",
+    "websocket",
+    "ipc",
+    "zod"
+  ],
   "version": "1.0.0",
   "scripts": {
     "build": "bun tsc",

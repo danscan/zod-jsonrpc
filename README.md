@@ -1,4 +1,4 @@
-# zod-jsonrpc
+# @danscan/zod-jsonrpc
 
 Create JSON-RPC 2.0-compliant servers that use Zod to validate requests and responses.
 
@@ -18,15 +18,15 @@ Just define your methods with Zod schemas and handlers, and let the server handl
 ## Installation
 
 ```bash
-bun add zod-jsonrpc
-yarn add zod-jsonrpc
-npm add zod-jsonrpc
+bun add @danscan/zod-jsonrpc
+yarn add @danscan/zod-jsonrpc
+npm add @danscan/zod-jsonrpc
 ```
 
 ## Usage
 
 ```typescript
-import { Server, JSONRPC2Error } from 'zod-jsonrpc';
+import { Server, JSONRPC2Error } from '@danscan/zod-jsonrpc';
 
 const server = new Server({
   greet: {
