@@ -1,0 +1,9 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`JSONRPC2Error.InternalErrorWithData should include the data in its JSON representation 1`] = `
+{
+  "code": -32603,
+  "data": "test data",
+  "message": "Internal error",
+}
+`;
