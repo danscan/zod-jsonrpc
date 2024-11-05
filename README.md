@@ -12,7 +12,7 @@ Just define your methods with Zod schemas and handlers, and let the server handl
 - Rich documentation comments referencing the JSON-RPC 2.0 specification
 - Exports Zod schemas and types for JSON-RPC requests, responses, errors and notifications
 - Built with TypeScript
-- One dependency: `zod`
+- No dependencies; just one peer dependency: `zod`
 
 
 ## Installation
