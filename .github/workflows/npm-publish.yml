@@ -19,10 +19,18 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test
 
-      - name: Setup npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name: Login to npm
+        run: |
+          cat > ~/.npmrc << EOF
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          registry=https://registry.npmjs.org/
+          EOF
 
-      - name: Publish to npm
-        run: bun publish
+      - name: Build and publish
+        run: |
+          bunx npm whoami
+          bun run build
+          bun publish
         env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
