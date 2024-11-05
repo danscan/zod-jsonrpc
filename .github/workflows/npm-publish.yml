@@ -28,6 +28,7 @@ jobs:
 
       - name: Build and publish
         run: |
+          bunx npm login
           bunx npm whoami
           bun run build
           bun publish --access public
