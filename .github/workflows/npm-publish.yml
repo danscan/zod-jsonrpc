@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and publish
         run: |
-          bunx npm login
+          bunx npm login --auth-type=legacy --registry=https://registry.npmjs.org/ --non-interactive
           bunx npm whoami
           bun run build
           bun publish --access public
