@@ -1,8 +1,10 @@
 {
   "name": "zod-jsonrpc",
   "version": "1.0.0",
-  "module": "src/index.ts",
-  "type": "module",
+  "scripts": {
+    "build": "bun tsc",
+    "prepare": "bun run build"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -11,5 +13,9 @@
   },
   "dependencies": {
     "zod": "^3.23.8"
-  }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module"
 }
