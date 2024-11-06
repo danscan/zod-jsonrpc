@@ -1,33 +1,40 @@
-import { Server } from './Server';
-import { JSONRPC2Error } from './JSONRPC2Error';
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { z } from 'zod';
-import type { JSONRPCResponse } from './JSONRPC2Schemas';
+import { JSONRPC2Error } from './JSONRPC2Error';
+import { Server } from './Server';
 
 let notificationParam: string | undefined;
 
+const { method, notification } = Server;
+
 const server = new Server({
-  greeting: {
+  greeting: method({
     paramsSchema: z.tuple([z.string()]),
     resultSchema: z.string(),
     handler: async (params) => `Hello, ${params[0]}!`,
-  },
+  }),
 
-  notification: {
-    type: 'notification',
+  notification: notification({
     paramsSchema: z.tuple([z.string()]),
     handler: async (params) => {
       notificationParam = params[0];
     },
-  },
+  }),
 
-  internalError: {
+  internalError: method({
     paramsSchema: z.undefined(),
     resultSchema: z.string(),
     handler: async () => {
       throw JSONRPC2Error.InternalErrorWithData('test data');
     },
-  },
+  }),
+
+  invalidResult: method({
+    paramsSchema: z.void(),
+    resultSchema: z.number(),
+    // @ts-expect-error - This is supposed to be an error because the test exercises invalid result types
+    handler: async () => 'test result',
+  }),
 });
 
 describe('Server.request', () => {
@@ -116,6 +123,11 @@ describe('Server.request', () => {
       },
       {
         jsonrpc: '2.0',
+        method: 'notification',
+        params: ['The notification was received'],
+      },
+      {
+        jsonrpc: '2.0',
         id: 2,
         method: 'greeting',
         params: ['Andrea'],
@@ -125,6 +137,7 @@ describe('Server.request', () => {
       { jsonrpc: '2.0', id: 1, result: 'Hello, Dan!' },
       { jsonrpc: '2.0', id: 2, result: 'Hello, Andrea!' },
     ]);
+    expect(notificationParam).toBe('The notification was received');
   });
 
   it('handles string request ids', async () => {
@@ -135,7 +148,13 @@ describe('Server.request', () => {
 
 describe('Server.extend', () => {
   it('extends the server with new methods', async () => {
-    const extendedServer = server.extend({ newMethod: { paramsSchema: z.tuple([z.string()]), resultSchema: z.string(), handler: async (params) => `Hello, ${params[0]}!` } });
+    const extendedServer = server.extend({
+      newMethod: method({
+        paramsSchema: z.tuple([z.string()]),
+        resultSchema: z.string(),
+        handler: async (params) => `Hello, ${params[0]}!`,
+      }),
+    });
     const result = await extendedServer.request({
       jsonrpc: '2.0',
       id: 1,
@@ -150,5 +169,16 @@ describe('Server.supportsMethod', () => {
   it('returns whether the server supports a given method', () => {
     expect(server.supportsMethod('greeting')).toBe(true);
     expect(server.supportsMethod('unknownMethod')).toBe(false);
+  });
+});
+
+describe('Server.method.resultSchema', () => {
+  it('returns an internal error if the result does not adhere to the result schema', async () => {
+    const result = await server.request({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'invalidResult',
+    });
+    expect(result).toMatchObject({ jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error' } });
   });
 });

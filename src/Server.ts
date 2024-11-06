@@ -1,57 +1,32 @@
 import type { z } from 'zod';
 import { JSONRPC2Error } from './JSONRPC2Error';
 import {
-  type JSONRPCRequest,
-  type JSONRPCResponse,
-  type JSONRPCResponseBatch,
   JSONRPCRequestBatchSchema,
   JSONRPCRequestSchema,
   JSONRPCResponseBatchSchema,
-  JSONRPCResponseSchema
+  JSONRPCResponseSchema,
+  type JSONRPCRequest,
+  type JSONRPCResponse,
+  type JSONRPCResponseBatch
 } from './JSONRPC2Schemas';
+import { ServerMethod, ServerMethodSpec, ServerNotification } from './Methods';
 
-type BaseMethodHandler<TParams, TResult> = {
-  paramsSchema: z.ZodType<TParams>;
-  handler: (params: TParams) => Promise<TResult>;
-};
-
-type RPCMethodHandler<TParams, TResult> = BaseMethodHandler<TParams, TResult> & {
-  resultSchema: z.ZodType<TResult>;
-};
-
-type NotificationMethodHandler<TParams> = BaseMethodHandler<TParams, void> & {
-  type: 'notification';
-};
-
-// Simplified MethodHandler type with better constraints
-export type MethodHandler<
-  TParams extends z.ZodTypeAny,
-  TResult extends z.ZodTypeAny
-> = RPCMethodHandler<z.infer<TParams>, z.infer<TResult>> | NotificationMethodHandler<z.infer<TParams>>;
-
-export type Methods = Record<string, MethodHandler<any, any>>;
-
-export class Server<TMethods extends Methods> {
+export class Server<TMethods extends Record<string, ServerMethodSpec>> {
   constructor(private readonly methods: TMethods) {}
 
-  extend<TExtendedMethods extends Methods>(methods: TExtendedMethods) {
+  /** Extends the server with additional methods */
+  extend<TExtendedMethods extends Record<string, ServerMethodSpec>>(methods: TExtendedMethods) {
     return new Server<TMethods & TExtendedMethods>({ ...this.methods, ...methods });
   }
 
-  /**
-   * Returns whether this server supports the given method.
-   */
+  /** Returns whether this server supports the given method. */
   supportsMethod(method: string) {
     return method in this.methods;
   }
 
-  /**
-   * Handles a JSON-RPC 2.0 request.
-   * @param request - The JSON-RPC 2.0 request.
-   * @returns The JSON-RPC 2.0 response.
-   */
+  /** Handles a JSON-RPC 2.0 request. */
   async request(
-    /** The JSON-RPC 2.0 request. */
+    /** The JSON-RPC 2.0 request as a record or array of records (e.g. parsed JSON object or array of objects) */
     request: Record<string, unknown> | Record<string, unknown>[]
   ): Promise<JSONRPCResponse | JSONRPCResponseBatch | void> {
     // If the request is an array, it's a batch request
@@ -102,13 +77,13 @@ export class Server<TMethods extends Methods> {
   }
 
   /** Private method that calls a method handler, used by `handleMethodRequest`. */
-  private async callMethod<TMethod extends MethodHandler<any, any>>(
+  private async callMethod<TMethod extends ServerMethodSpec>(
     method: TMethod,
     id: JSONRPCRequest['id'],
     params: z.infer<TMethod['paramsSchema']>
   ): Promise<JSONRPCResponse | void> {
     // Check if the method is a notification
-    const isNotification = 'type' in method && method.type === 'notification';
+    const isNotification = method.type === 'notification';
 
     try {
       // Call the method handler
@@ -119,7 +94,7 @@ export class Server<TMethods extends Methods> {
       // The request is not a notification, return the result
       return JSONRPCResponseSchema.parse({
         jsonrpc: '2.0',
-        result,
+        result: method.resultSchema.parse(result),
         id,
       });
     } catch (error) {
@@ -137,6 +112,46 @@ export class Server<TMethods extends Methods> {
         : JSONRPC2Error.InternalErrorWithData(error),
       id,
     });
+  }
+
+  /** Defines a type-safe server method. */
+  static method<
+    TParams extends z.ZodTypeAny,
+    TResult extends z.ZodTypeAny,
+    THandler extends (input: z.infer<TParams>) => Promise<z.infer<TResult>>
+  >({
+    paramsSchema,
+    resultSchema,
+    handler,
+  }: {
+    paramsSchema: TParams;
+    resultSchema: TResult;
+    handler: THandler;
+  }): ServerMethod<TParams, TResult> {
+    return {
+      type: 'method',
+      paramsSchema,
+      resultSchema,
+      handler,
+    };
+  }
+
+  /** Defines a type-safe server notification. */
+  static notification<
+    TParams extends z.ZodTypeAny,
+    THandler extends (input: z.infer<TParams>) => Promise<void>
+  >({
+    paramsSchema,
+    handler,
+  }: {
+    paramsSchema: TParams;
+    handler: THandler;
+  }): ServerNotification<TParams> {
+    return {
+      type: 'notification',
+      paramsSchema,
+      handler,
+    };
   }
 }
 

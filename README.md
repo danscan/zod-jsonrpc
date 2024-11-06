@@ -30,13 +30,13 @@ import { Server, JSONRPC2Error } from '@danscan/zod-jsonrpc';
 import { z } from 'zod';
 
 const server = new Server({
-  greet: {
+  greet: Server.method({
     paramsSchema: z.object({ name: z.string() }),
     resultSchema: z.string(),
     handler: async ({ name }) => `Hello, ${name}!`,
-  },
+  }),
 
-  mustBeOdd: {
+  mustBeOdd: Server.method({
     paramsSchema: z.object({ number: z.number() }),
     resultSchema: z.boolean(),
     handler: ({ number }) => {
@@ -50,7 +50,7 @@ const server = new Server({
       }
       return true;
     },
-  },
+  }),
 });
 
 // Handles single requests
