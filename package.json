@@ -1,6 +1,6 @@
 {
   "name": "@danscan/zod-jsonrpc",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Create JSON-RPC 2.0-compliant servers that use Zod to validate requests and responses.",
   "repository": "https://github.com/danscan/zod-jsonrpc",
   "homepage": "https://github.com/danscan/zod-jsonrpc",
