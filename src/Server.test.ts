@@ -145,3 +145,10 @@ describe('Server.extend', () => {
     expect(result).toMatchObject({ jsonrpc: '2.0', id: 1, result: 'Hello, Dan!' });
   });
 });
+
+describe('Server.supportsMethod', () => {
+  it('returns whether the server supports a given method', () => {
+    expect(server.supportsMethod('greeting')).toBe(true);
+    expect(server.supportsMethod('unknownMethod')).toBe(false);
+  });
+});

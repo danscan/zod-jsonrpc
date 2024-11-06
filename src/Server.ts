@@ -39,6 +39,13 @@ export class Server<TMethods extends Methods> {
   }
 
   /**
+   * Returns whether this server supports the given method.
+   */
+  supportsMethod(method: string) {
+    return method in this.methods;
+  }
+
+  /**
    * Handles a JSON-RPC 2.0 request.
    * @param request - The JSON-RPC 2.0 request.
    * @returns The JSON-RPC 2.0 response.
