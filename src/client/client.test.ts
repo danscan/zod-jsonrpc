@@ -5,21 +5,11 @@ import { method } from '../method';
 import { createServer } from '../server';
 import { createClient } from '.';
 
-let notificationValue: string | undefined;
-
 const server = createServer({
   greeting: method({
     paramsSchema: z.tuple([z.string()]),
     resultSchema: z.string(),
   }, async ([name]) => `Hello, ${name}!`),
-
-  notification: method({
-    paramsSchema: z.tuple([z.string()]),
-    resultSchema: z.boolean(),
-  }, async ([value]) => {
-    notificationValue = value;
-    return true;
-  }),
 
   internalError: method({
     paramsSchema: z.void(),
@@ -33,11 +23,6 @@ const client = createClient({
   greeting: method({
     paramsSchema: z.tuple([z.string()]),
     resultSchema: z.string(),
-  }),
-
-  notification: method({
-    paramsSchema: z.tuple([z.string()]),
-    resultSchema: z.boolean(),
   }),
 
   internalError: method({
