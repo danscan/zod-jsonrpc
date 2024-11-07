@@ -88,7 +88,21 @@ export const JSONRPCResponseSchema = z.object({
    * This member MUST NOT exist if there was no error triggered during invocation.
    * The value for this member MUST be an Object as defined in section 5.1. [Implemented in JSONRPC2Error]
    */
-  error: z.instanceof(JSONRPCError).transform(e => e.toJSON()).optional(),
+  error: z.instanceof(JSONRPCError)
+    .or(z.record(z.string(), z.any())
+      .transform((e: {
+        code?: number;
+        message?: string;
+        data?: any;
+      }) => new JSONRPCError(
+        e.code ?? -32603,
+        e.message ?? 'Internal error',
+        e.data ?? { error: e },
+      )),
+    )
+    .catch(e => JSONRPCError.ParseError({ message: 'Invalid error object', data: e }))
+    .pipe(z.instanceof(JSONRPCError).transform(e => e.toJSON()))
+    .optional(),
 
   /**
    * JSON-RPC 2.0 Specification:
