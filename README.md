@@ -134,7 +134,7 @@ const result = await client.batch((ctx) => ({
 /*
 {
   dan: { status: 'success', result: 'Hello, Dan!' },
-  drea: 'Hello, Drea!',
+  drea: { status: 'success', result: 'Hello, Drea!' },
 }
 */
 ```
