@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JSONRPC2Error } from './JSONRPC2Error';
+import { JSONRPCError } from './JSONRPCError';
 
 /**
  * JSON-RPC 2.0 Request Object Specification:
@@ -17,7 +17,7 @@ export const JSONRPCRequestSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0'),
+  jsonrpc: z.literal('2.0').default('2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -70,7 +70,7 @@ export const JSONRPCResponseSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0'),
+  jsonrpc: z.literal('2.0').default('2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -88,7 +88,7 @@ export const JSONRPCResponseSchema = z.object({
    * This member MUST NOT exist if there was no error triggered during invocation.
    * The value for this member MUST be an Object as defined in section 5.1. [Implemented in JSONRPC2Error]
    */
-  error: z.instanceof(JSONRPC2Error).transform(e => e.toJSON()).optional(),
+  error: z.instanceof(JSONRPCError).transform(e => e.toJSON()).optional(),
 
   /**
    * JSON-RPC 2.0 Specification:
