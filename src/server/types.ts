@@ -1,5 +1,5 @@
-import { RequestObject, ResponseObject } from '../jsonrpc';
-import { ServerMethodDef } from '../method';
+import type { RequestObject, ResponseObject } from '../jsonrpc';
+import type { ServerMethodDef } from '../method';
 
 /**
  * A record of a server's method definitions by their names.

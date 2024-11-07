@@ -13,7 +13,7 @@ export interface ClientMethodDef<
 
 /** A type-safe server-side method definition. */
 export interface ServerMethodDef<
-  TParams extends MethodParams = MethodParams,
+  TParams extends MethodParams = any,
   TResult extends z.ZodTypeAny = z.ZodTypeAny
 > extends ClientMethodDef<TParams, TResult> {
   /** The handler of the method */

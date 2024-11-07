@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ClientMethodDef, MaybePromise, ServerMethodDef, ServerMethodHandler, MethodParams } from './types';
+import type { ClientMethodDef, ServerMethodDef, ServerMethodHandler, MethodParams } from './types';
 
 /** Creates a type-safe client method definition. */
 export function method<
@@ -16,7 +16,7 @@ export function method<
 export function method<
   TParams extends MethodParams,
   TResult extends z.ZodTypeAny,
->({ paramsSchema, resultSchema }: { paramsSchema: TParams; resultSchema: TResult; }, handler: ServerMethodHandler<TParams, TResult>): ServerMethodDef<TParams, TResult> {
+>({ paramsSchema, resultSchema }: { paramsSchema: TParams; resultSchema: TResult; }, handler?: ServerMethodHandler<TParams, TResult>): ServerMethodDef<TParams, TResult> {
   // Validate the params schema type
   const paramsSchemaValid =
     paramsSchema instanceof z.ZodVoid ||

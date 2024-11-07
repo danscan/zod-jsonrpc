@@ -1,4 +1,4 @@
-import { JSONRPCResponse, JSONRPCResponseBatch } from "./JSONRPCSchemas";
+import type { JSONRPCResponse, JSONRPCResponseBatch } from "./JSONRPCSchemas";
 
 /**
  * An union: object or array of objects representing a JSON-RPC 2.0 request.

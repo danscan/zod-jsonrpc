@@ -1,18 +1,18 @@
 import { z } from 'zod';
 import {
-  BatchRequestObject,
+  type BatchRequestObject,
   JSONRPCError,
-  JSONRPCRequest,
+  type JSONRPCRequest,
   JSONRPCRequestBatchSchema,
   JSONRPCRequestSchema,
   JSONRPCResponseBatchSchema,
   JSONRPCResponseSchema,
-  RequestObject,
-  ResponseObject
+  type RequestObject,
+  type ResponseObject,
 } from '../jsonrpc';
-import { ServerMethodDef } from '../method';
+import type { ServerMethodDef } from '../method';
 import { buildErrorResponse } from './buildErrorResponse';
-import { ServerDef } from './types';
+import type { ServerDef } from './types';
 
 /**
  * Creates a JSON-RPC 2.0 server.
@@ -21,8 +21,10 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs) {
   return {
     /**
      * Handles a JSON-RPC request.
+     *
+     * Returns a ResponseObject, or null if the request is a single notification.
      */
-    request: async (request: RequestObject): Promise<ResponseObject> => {
+    request: async (request: RequestObject): Promise<ResponseObject | null> => {
       // If the request is an array, attempt to handle it as a batch request
       if (Array.isArray(request)) return handleArrayRequest(methods, request);
 
@@ -36,7 +38,9 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs) {
       );
 
       // Handle the single request
-      return parseRequestAndCallMethod(methods, singleRequest);
+      const result = await parseRequestAndCallMethod(methods, singleRequest);
+      // Return the result unless the request is a notification
+      return result ?? null;
     },
 
     /**

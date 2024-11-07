@@ -22,7 +22,7 @@ describe('method', () => {
     const lol = method({
       paramsSchema: z.tuple([z.string()]),
       resultSchema: z.boolean(),
-    }, async (params) => true);
+    }, async (params) => typeof params[0] === 'string');
 
     expect(lol).toMatchObject({
       paramsSchema: z.tuple([z.string()]),
@@ -34,5 +34,10 @@ describe('method', () => {
   it('should throw an error if the params schema is invalid', () => {
     // @ts-expect-error - params schema is invalid
     expect(() => method({ paramsSchema: z.string(), resultSchema: z.boolean() })).toThrow('Invalid params schema');
+  });
+
+  it('should have a type error if the return type of the handler does not match the result schema', () => {
+    // @ts-expect-error - return type does not match result schema
+    method({ paramsSchema: z.void(), resultSchema: z.boolean() }, async () => 'test result');
   });
 });

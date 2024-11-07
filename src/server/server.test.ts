@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { z } from 'zod';
-import { createServer } from './index';
+import { createServer } from '.';
 import { JSONRPCError } from '../jsonrpc';
 import { method } from '../method';
 
@@ -25,6 +25,7 @@ const server = createServer({
     resultSchema: z.string(),
   }, async () => {
     throw JSONRPCError.InternalError({ message: 'Intentional test error', data: 'test data' });
+    return 'haha';
   }),
 
   // @ts-expect-error - this is exercising invalid result types, which are a type error
@@ -53,7 +54,7 @@ describe('server.request', () => {
       method: 'notification',
       params: ['Dan'],
     });
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
     expect(notificationParam).toBe('Dan');
   });
 
