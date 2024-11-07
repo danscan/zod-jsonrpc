@@ -10,7 +10,7 @@ const server = createServer({
   greeting: method({
     paramsSchema: z.tuple([z.string()]),
     resultSchema: z.string(),
-  }, async (params) => `Hello, ${params[0]}!`),
+  }, (params) => `Hello, ${params[0]}!`),
 
   notification: method({
     paramsSchema: z.tuple([z.string()]),
