@@ -25,9 +25,11 @@ const server = createServer({
     resultSchema: z.string(),
   }, async () => {
     throw JSONRPCError.InternalError({ message: 'Intentional test error', data: 'test data' });
-    return 'haha';
   }),
+});
 
+const serverWithSchemaError = createServer({
+  // If the below is not a type error, something is broken
   // @ts-expect-error - this is exercising invalid result types, which are a type error
   invalidResult: method({
     paramsSchema: z.void(),
@@ -156,11 +158,19 @@ describe('server.extend', () => {
 
 describe('server.method.resultSchema', () => {
   it('returns an internal error if the result does not adhere to the result schema', async () => {
-    const result = await server.request({
+    const result = await serverWithSchemaError.request({
       jsonrpc: '2.0',
       id: 1,
       method: 'invalidResult',
     });
     expect(result).toMatchObject({ jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error' } });
+  });
+});
+
+describe('server.createClient', () => {
+  it('creates a typed client for the server', async () => {
+    const client = server.createClient(async (req) => server.request(req));
+    const result = await client.greeting(['Dan']);
+    expect(result).toBe('Hello, Dan!');
   });
 });

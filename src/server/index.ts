@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { createClient } from '../client';
+import { ClientDef, SendRequestFn } from '../client/types';
 import {
   type BatchRequestObject,
   JSONRPCError,
@@ -48,6 +50,25 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs): Server<TD
      */
     extend: <TNewDefs extends ServerDef>(defs: TNewDefs) =>
       createServer<TNewDefs & TDefs>({ ...methods, ...defs }),
+
+    /**
+     * Creates a typed client for the server.
+     */
+    createClient: (
+      /** The function used to send requests to the server. */
+      sendRequest: SendRequestFn,
+    ) => {
+      const clientMethods: ClientDef = {};
+
+      for (const methodName of Object.keys(methods)) {
+        clientMethods[methodName] = {
+          paramsSchema: methods[methodName].paramsSchema,
+          resultSchema: methods[methodName].resultSchema,
+        };
+      }
+
+      return createClient(clientMethods as TDefs, sendRequest);
+    },
   };
 }
 
