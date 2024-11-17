@@ -126,15 +126,15 @@ const client = createClient({
 const result = await client.greet({ name: 'danscan' });
 // 'Hello, danscan!'
 
-// Send a batch request, setting a convenient ID for each request so you can easily match them up in the response
+// Send a batch request, setting a convenient key for each request so you can easily match them up in the response
 const result = await client.batch((ctx) => ({
   dan: ctx.greet({ name: 'Dan' }),
   drea: ctx.greet({ name: 'Drea' }),
 }));
 /*
 {
-  dan: { status: 'success', result: 'Hello, Dan!' },
-  drea: { status: 'success', result: 'Hello, Drea!' },
+  dan: { ok: true, value: 'Hello, Dan!' },
+  drea: { ok: true, value: 'Hello, Drea!' },
 }
 */
 ```
