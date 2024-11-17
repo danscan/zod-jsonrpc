@@ -12,12 +12,12 @@ import {
 } from '../jsonrpc';
 import type { ServerMethodDef } from '../method';
 import { buildErrorResponse } from './buildErrorResponse';
-import type { ServerDef } from './types';
+import type { Server, ServerDef } from './types';
 
 /**
  * Creates a JSON-RPC 2.0 server.
  */
-export function createServer<TDefs extends ServerDef>(methods: TDefs) {
+export function createServer<TDefs extends ServerDef>(methods: TDefs): Server<TDefs> {
   return {
     /**
      * Handles a JSON-RPC request.

@@ -38,12 +38,12 @@ describe('client', () => {
   });
 
   it('handles a JSON RPC 2.0 error response', async () => {
-    await expect(client.internalError()).rejects.toThrow();
+    expect(client.internalError()).rejects.toThrow();
   });
 
   it('handles invalid params', async () => {
     // @ts-expect-error - invalid params type
-    await expect(client.greeting('invalid')).rejects.toThrow();
+    expect(client.greeting('invalid')).rejects.toThrow();
   });
 
   it('handles a batch request', async () => {
@@ -53,20 +53,19 @@ describe('client', () => {
     }));
 
     expect(result).toMatchObject({
-      dan: { status: 'success', result: 'Hello, Dan!' },
-      andrea: { status: 'success', result: 'Hello, Andrea!' },
+      dan: { ok: true, value: 'Hello, Dan!' },
+      andrea: { ok: true, value: 'Hello, Andrea!' },
     });
   });
 
   it('handles a batch request with mixed success/error results', async () => {
-    const result = await client.batch((ctx) => ({
+    const batchResult = await client.batch((ctx) => ({
       success: ctx.greeting(['Dan']),
       error: ctx.internalError(),
     }));
-
-    expect(result).toMatchObject({
-      success: { status: 'success', result: 'Hello, Dan!' },
-      error: { status: 'error', error: expect.any(JSONRPCError) },
+    expect(batchResult).toMatchObject({
+      success: { ok: true, value: 'Hello, Dan!' },
+      error: { ok: false, error: expect.any(JSONRPCError) },
     });
   });
 });

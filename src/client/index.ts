@@ -3,7 +3,7 @@ import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseSchema } from '../js
 import { batch, type BatchContext, type BatchRequestConfig } from './batch';
 import type { Client, ClientDef, SendRequestFn } from './types';
 
-export function createClient<TDef extends ClientDef>(defs: TDef, sendRequest: SendRequestFn) {
+export function createClient<TDef extends ClientDef>(defs: TDef, sendRequest: SendRequestFn): Client<TDef> {
   const baseClient = {
     /** Sends a batch request to the server, validating the responses against the expected types, and returning a typed result. */
     batch: (getBatchRequestConfig: (ctx: BatchContext<TDef>) => BatchRequestConfig) => batch(defs, getBatchRequestConfig, sendRequest),

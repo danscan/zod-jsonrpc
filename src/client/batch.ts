@@ -3,32 +3,37 @@ import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseBatchSchema, type JS
 import type { ClientMethodDef } from '../method';
 import type { ClientDef, SendRequestFn } from './types';
 
+/** The batch method of a client. */
+export type ClientBatch<TDef extends ClientDef> = <TConfig extends BatchRequestConfig>(
+  getBatchRequestConfig: (ctx: BatchContext<TDef>) => TConfig
+) => Promise<BatchResult<TConfig>>;
+
 /** A record of request builders by method names. */
 export type BatchContext<TDef extends ClientDef> = {
   [K in keyof TDef]: TDef[K] extends ClientMethodDef<infer TParams>
-    ? (params: z.infer<TParams>) => BatchRequestConfigEntry
+    ? (params: z.infer<TParams>) => BatchRequestConfigEntry<TDef[K]>
     : never;
 };
 
 /** A record from a local request ID to a request to be sent in a batch. */
-export type BatchRequestConfig = Record<string, BatchRequestConfigEntry>;
-export type BatchRequestConfigEntry = [ClientMethodDef, JSONRPCRequest];
+export type BatchRequestConfig = Record<string, BatchRequestConfigEntry<ClientMethodDef>>;
+export type BatchRequestConfigEntry<TMethodDef extends ClientMethodDef> = [TMethodDef, JSONRPCRequest];
 
 /** A record from a local request ID to a response from a batch. */
 export type BatchResult<TBatchConfig extends BatchRequestConfig> = {
-  [K in keyof TBatchConfig]: TBatchConfig[K] extends BatchRequestConfigEntry
-    ? BatchResultEntry<TBatchConfig[K]>
+  [K in keyof TBatchConfig]: TBatchConfig[K] extends BatchRequestConfigEntry<infer TMethodDef>
+    ? BatchResultEntry<TMethodDef>
     : never;
 };
 
 /** A result from a batch request. */
-export type BatchResultEntry<TBatchRequestConfigEntry extends BatchRequestConfigEntry> =
-  | { status: 'success', result: z.infer<TBatchRequestConfigEntry[0]['resultSchema']> }
-  | { status: 'error', error: JSONRPCError };
+export type BatchResultEntry<TMethodDef extends ClientMethodDef> =
+  | { ok: true; value: z.infer<TMethodDef['resultSchema']> }
+  | { ok: false; error: JSONRPCError };
 
 /** Builds a batch context from a client definition. */
 function buildBatchContext<TDef extends ClientDef>(defs: TDef): BatchContext<TDef> {
-  const ctx: Record<string, (p: any) => BatchRequestConfigEntry> = {};
+  const ctx: Record<string, (p: any) => BatchRequestConfigEntry<TDef[keyof TDef]>> = {};
 
   for (const [methodName, methodDef] of Object.entries(defs)) {
     try {
@@ -37,7 +42,7 @@ function buildBatchContext<TDef extends ClientDef>(defs: TDef): BatchContext<TDe
         method: methodName,
         params: methodDef.paramsSchema.parse(params),
         id: crypto.randomUUID(),
-      })];
+      })] as BatchRequestConfigEntry<TDef[keyof TDef]>;
     } catch (error) {
       throw JSONRPCError.InvalidParams({ message: `Invalid params for batch method ${methodName}: ${error}` });
     }
@@ -76,17 +81,17 @@ export async function batch<
   }
 
   // Parse the results and map them to the local request IDs
-  const results: Record<string, BatchResultEntry<TBatchConfig[keyof TBatchConfig]>> = {};
+  const results: Record<string, BatchResultEntry<TBatchConfig[keyof TBatchConfig][0]>> = {};
   for (const { id, result, error } of batchResponse) {
     const localRequestId = localRequestIdsByGeneratedId.get(id as string);
     if (!localRequestId) throw JSONRPCError.InvalidRequest({ message: `No local request ID found for generated ID ${id}` });
     const methodDef = batchConfig[localRequestId as keyof TBatchConfig][0];
     try {
       results[localRequestId] = error
-        ? { status: 'error', error: new JSONRPCError(error.code, error.message, error.data) }
-        : { status: 'success', result: methodDef.resultSchema.parse(result) };
+        ? { ok: false, error: new JSONRPCError(error.code, error.message, error.data) }
+        : { ok: true, value: methodDef.resultSchema.parse(result) };
     } catch (error) {
-      results[localRequestId] = { status: 'error', error: JSONRPCError.InternalError({ message: `Invalid result in batch result for entry ${localRequestId}`, data: { error, result} }) };
+      results[localRequestId] = { ok: false, error: JSONRPCError.InternalError({ message: `Invalid result in batch result for entry ${localRequestId}`, data: { error, result} }) };
     }
   }
   // Map the responses to the expected types

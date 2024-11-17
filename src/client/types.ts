@@ -1,11 +1,11 @@
 import type { z } from 'zod';
 import type { RequestObject, ResponseObject } from '../jsonrpc';
 import type { ClientMethodDef } from '../method';
-import type { BatchContext, BatchRequestConfig, BatchResult } from './batch';
+import type { ClientBatch } from './batch';
 
 export type Client<TDef extends ClientDef> = ClientMethods<TDef> & {
   /** Sends a batch request to the server, validating the responses against the expected types, and returning a typed result. */
-  batch: (getBatchRequestConfig: (ctx: BatchContext<TDef>) => BatchRequestConfig) => Promise<BatchResult<BatchRequestConfig>>;
+  batch: ClientBatch<TDef>;
 };
 
 /**
