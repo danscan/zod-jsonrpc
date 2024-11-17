@@ -138,3 +138,11 @@ const result = await client.batch((ctx) => ({
 }
 */
 ```
+
+If you already have a server defined, you can create a client from it using the `server.createClient` method.
+
+```typescript
+const client = server.createClient(async (request) => {
+  // TODO: send the request to the server and return the result
+});
+```
