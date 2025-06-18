@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
+import { z } from 'zod/v4';
 import { method } from './method';
-import { z } from 'zod';
 
 describe('method', () => {
   it('should return a client method definition', () => {

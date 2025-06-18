@@ -1,6 +1,6 @@
 {
   "name": "@danscan/zod-jsonrpc",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Create JSON-RPC 2.0-compliant clients and servers that use Zod to validate requests and responses.",
   "repository": "https://github.com/danscan/zod-jsonrpc",
   "homepage": "https://github.com/danscan/zod-jsonrpc",
@@ -27,7 +27,7 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "zod": "^3.0.0"
+    "zod": "^3.25.00"
   },
   "main": "dist/index.js",
   "module": "dist/index.js",

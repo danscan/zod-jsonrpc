@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import { z } from 'zod/v4';
 import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseSchema } from '../jsonrpc';
 import { batch, type BatchContext, type BatchRequestConfig } from './batch';
 import type { Client, ClientDef, SendRequestFn } from './types';

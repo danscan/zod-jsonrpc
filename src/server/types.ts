@@ -1,11 +1,11 @@
 import { Client, SendRequestFn } from '../client/types';
 import type { RequestObject, ResponseObject } from '../jsonrpc';
-import type { ServerMethodDef } from '../method';
+import type { AnyServerMethodDef } from '../method';
 
 /**
  * A record of a server's method definitions by their names.
  */
-export type ServerDef = Record<string, ServerMethodDef>;
+export type ServerDef = Record<string, AnyServerMethodDef>;
 
 /**
  * A JSON-RPC 2.0 server.

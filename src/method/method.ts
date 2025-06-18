@@ -1,21 +1,21 @@
-import { z } from 'zod';
-import type { ClientMethodDef, ServerMethodDef, ServerMethodHandler, MethodParams } from './types';
+import { z } from 'zod/v4';
+import type { ClientMethodDef, MethodParams, ServerMethodDef, ServerMethodHandler } from './types';
 
 /** Creates a type-safe client method definition. */
 export function method<
   TParams extends MethodParams,
-  TResult extends z.ZodTypeAny,
+  TResult extends z.ZodType,
 >(definition: { paramsSchema: TParams; resultSchema: TResult }, handler?: never): ClientMethodDef<TParams, TResult>;
 
 /** Creates a type-safe server method definition. */
 export function method<
   TParams extends MethodParams,
-  TResult extends z.ZodTypeAny,
+  TResult extends z.ZodType,
 >(definition: { paramsSchema: TParams; resultSchema: TResult }, handler: ServerMethodHandler<TParams, TResult>): ServerMethodDef<TParams, TResult>;
 
 export function method<
   TParams extends MethodParams,
-  TResult extends z.ZodTypeAny,
+  TResult extends z.ZodType,
 >({ paramsSchema, resultSchema }: { paramsSchema: TParams; resultSchema: TResult; }, handler?: ServerMethodHandler<TParams, TResult>): ServerMethodDef<TParams, TResult> {
   // Validate the params schema type
   const paramsSchemaValid =

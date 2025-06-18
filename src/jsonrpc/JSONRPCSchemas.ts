@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { JSONRPCError } from './JSONRPCError';
 
 /**
@@ -17,7 +17,7 @@ export const JSONRPCRequestSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0').default('2.0'),
+  jsonrpc: z.literal('2.0').prefault('2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -70,7 +70,7 @@ export const JSONRPCResponseSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0').default('2.0'),
+  jsonrpc: z.literal('2.0').prefault('2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:

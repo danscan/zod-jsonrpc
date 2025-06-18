@@ -1,4 +1,4 @@
-import { ZodError } from "zod";
+import { z } from "zod/v4";
 
 // Type for optional error configuration using statics
 type ErrorConfig = { message?: string; data?: unknown };
@@ -34,8 +34,8 @@ export class JSONRPCError extends Error {
     // Set the error code according to the JSON-RPC 2.0 specification
     this.code = code;
     // Automatically format ZodErrors
-    this.data = data instanceof ZodError
-      ? data.format()
+    this.data = data instanceof z.ZodError
+      ? z.treeifyError(data)
       : data;
   }
 

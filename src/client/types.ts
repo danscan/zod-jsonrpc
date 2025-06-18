@@ -1,6 +1,6 @@
-import type { z } from 'zod';
+import type { z } from 'zod/v4';
 import type { RequestObject, ResponseObject } from '../jsonrpc';
-import type { ClientMethodDef } from '../method';
+import type { AnyClientMethodDef, ClientMethodDef } from '../method';
 import type { ClientBatch } from './batch';
 
 export type Client<TDef extends ClientDef> = ClientMethods<TDef> & {
@@ -11,7 +11,7 @@ export type Client<TDef extends ClientDef> = ClientMethods<TDef> & {
 /**
  * A record of a server's method definitions by their names.
  */
-export type ClientDef = Record<string, ClientMethodDef>;
+export type ClientDef = Record<string, AnyClientMethodDef>;
 
 /**
  * A JSON-RPC 2.0 server.

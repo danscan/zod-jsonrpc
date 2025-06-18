@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { createClient } from '.';
 import { JSONRPCError } from '../jsonrpc';
 import { method } from '../method';
 import { createServer } from '../server';
-import { createClient } from '.';
 
 const server = createServer({
   greeting: method({

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { createClient } from '../client';
 import { ClientDef, SendRequestFn } from '../client/types';
 import {
@@ -12,7 +12,7 @@ import {
   type RequestObject,
   type ResponseObject,
 } from '../jsonrpc';
-import type { ServerMethodDef } from '../method';
+import type { AnyServerMethodDef } from '../method';
 import { buildErrorResponse } from './buildErrorResponse';
 import type { Server, ServerDef } from './types';
 
@@ -154,14 +154,14 @@ async function parseRequestAndCallMethod<TDefs extends ServerDef>(
  * Calls a method handler with pre-parsed parameters and request ID.
  * Handles internal errors and returns a response.
  */
-async function callMethod<TDef extends ServerMethodDef>(
+async function callMethod<TDef extends AnyServerMethodDef>(
   method: TDef,
   params: z.infer<TDef['paramsSchema']>,
   id?: JSONRPCRequest['id']
 ) {
   try {
     const result = await method.handler(params);
-    return JSONRPCResponseSchema.parse({ result: method.resultSchema.parse(result), id });
+    return JSONRPCResponseSchema.parse({ result: z.parse(method.resultSchema, result), id });
   } catch (error) {
     return buildErrorResponse(error, id);
   }

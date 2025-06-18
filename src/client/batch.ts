@@ -1,6 +1,6 @@
-import type { z } from 'zod';
+import { z } from 'zod/v4';
 import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseBatchSchema, type JSONRPCRequest } from '../jsonrpc';
-import type { ClientMethodDef } from '../method';
+import type { AnyClientMethodDef, ClientMethodDef } from '../method';
 import type { ClientDef, SendRequestFn } from './types';
 
 /** The batch method of a client. */
@@ -10,14 +10,14 @@ export type ClientBatch<TDef extends ClientDef> = <TConfig extends BatchRequestC
 
 /** A record of request builders by method names. */
 export type BatchContext<TDef extends ClientDef> = {
-  [K in keyof TDef]: TDef[K] extends ClientMethodDef<infer TParams>
+  [K in keyof TDef]: TDef[K] extends ClientMethodDef<infer TParams, infer TResult>
     ? (params: z.infer<TParams>) => BatchRequestConfigEntry<TDef[K]>
     : never;
 };
 
 /** A record from a local request ID to a request to be sent in a batch. */
-export type BatchRequestConfig = Record<string, BatchRequestConfigEntry<ClientMethodDef>>;
-export type BatchRequestConfigEntry<TMethodDef extends ClientMethodDef> = [TMethodDef, JSONRPCRequest];
+export type BatchRequestConfig = Record<string, BatchRequestConfigEntry<AnyClientMethodDef>>;
+export type BatchRequestConfigEntry<TMethodDef extends AnyClientMethodDef> = [TMethodDef, JSONRPCRequest];
 
 /** A record from a local request ID to a response from a batch. */
 export type BatchResult<TBatchConfig extends BatchRequestConfig> = {
@@ -27,7 +27,7 @@ export type BatchResult<TBatchConfig extends BatchRequestConfig> = {
 };
 
 /** A result from a batch request. */
-export type BatchResultEntry<TMethodDef extends ClientMethodDef> =
+export type BatchResultEntry<TMethodDef extends AnyClientMethodDef> =
   | { ok: true; value: z.infer<TMethodDef['resultSchema']> }
   | { ok: false; error: JSONRPCError };
 
@@ -40,7 +40,7 @@ function buildBatchContext<TDef extends ClientDef>(defs: TDef): BatchContext<TDe
       ctx[methodName] = (params: any) => [methodDef, JSONRPCRequestSchema.parse({
         jsonrpc: '2.0',
         method: methodName,
-        params: methodDef.paramsSchema.parse(params),
+        params: z.parse(methodDef.paramsSchema, params),
         id: crypto.randomUUID(),
       })] as BatchRequestConfigEntry<TDef[keyof TDef]>;
     } catch (error) {

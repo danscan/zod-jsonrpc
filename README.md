@@ -12,7 +12,7 @@ Just define your methods with Zod schemas and handlers, and zod-jsonrpc will han
 - Rich documentation comments referencing the JSON-RPC 2.0 specification
 - Exports Zod schemas and types for JSON-RPC requests, responses, errors and notifications
 - Automatic type safety for requests and responses
-- No dependencies; just one peer dependency: `zod`
+- No dependencies; just one peer dependency: `zod@^3.25.0`. As of v3.0.0, zod-jsonrpc requires Zod v4 (`import { z } from 'zod/v4'`) to specify schemas.
 
 
 ## Installation
@@ -29,7 +29,7 @@ npm add @danscan/zod-jsonrpc
 
 ```typescript
 import { createServer, method, JSONRPC2Error } from '@danscan/zod-jsonrpc';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const server = createServer({
   greet: method({
@@ -103,7 +103,7 @@ Bun.serve({
 
 ```typescript
 import { createClient } from '@danscan/zod-jsonrpc';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 // Define a function that sends a JSON-RPC request to the server
 const sendRequest = async (request: JSONRPCRequest) => {

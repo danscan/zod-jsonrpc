@@ -1,5 +1,5 @@
+import { describe, expect, it } from 'bun:test';
 import { JSONRPCError } from './JSONRPCError';
-import { describe, it, expect } from 'bun:test';
 
 describe('JSONRPC2Error constructor', () => {
   it('should create an error with a code, message, and data', () => {
