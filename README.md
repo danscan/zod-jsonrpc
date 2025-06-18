@@ -12,8 +12,13 @@ Just define your methods with Zod schemas and handlers, and zod-jsonrpc will han
 - Rich documentation comments referencing the JSON-RPC 2.0 specification
 - Exports Zod schemas and types for JSON-RPC requests, responses, errors and notifications
 - Automatic type safety for requests and responses
-- No dependencies; just one peer dependency: `zod@^3.25.0`. As of v3.0.0, zod-jsonrpc requires Zod v4 (`import { z } from 'zod/v4'`) to specify schemas.
+- No dependencies; just one peer dependency: `zod@^3.25.0`.
 
+### Supported Zod Versions
+
+As of zod-jsonrpc v3.0.0, the Zod v4 API (`import { z } from 'zod/v4'`) is required to specify schemas.
+
+If you need support for the pre-v4 zod API, use zod-jsonrpc v2.1.0, which is compatible with `zod@^3.0.0`. 
 
 ## Installation
 
