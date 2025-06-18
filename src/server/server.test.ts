@@ -30,10 +30,10 @@ const server = createServer({
 
 const serverWithSchemaError = createServer({
   // If the below is not a type error, something is broken
-  // @ts-expect-error - this is exercising invalid result types, which are a type error
   invalidResult: method({
     paramsSchema: z.void(),
     resultSchema: z.number(),
+    // @ts-expect-error - this is exercising invalid result types, which are a type error
   }, async () => 'test result'),
 });
 

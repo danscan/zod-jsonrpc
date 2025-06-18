@@ -40,5 +40,20 @@ export type MethodParams =
   | z.ZodArray<z.ZodType>
   | z.ZodObject<Record<string, z.ZodType>>;
 
+// –
+// Utility types
+// –
+
+/** Converts a ServerMethodDef to a ClientMethodDef by extracting schemas */
+export type ServerMethodDefToClientMethodDef<T extends AnyServerMethodDef> = 
+  T extends ServerMethodDef<infer TParams, infer TResult>
+    ? ClientMethodDef<TParams, TResult>
+    : never;
+
+/** Converts a ServerDef to a ClientDef */
+export type ServerDefToClientDef<T extends Record<string, AnyServerMethodDef>> = {
+  [K in keyof T]: ServerMethodDefToClientMethodDef<T[K]>;
+};
+
 /** A helper for a synchronous or asynchronous function's return type. */
 export type MaybePromise<T> = T | Promise<T>;

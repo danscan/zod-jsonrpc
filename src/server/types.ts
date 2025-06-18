@@ -1,6 +1,6 @@
 import { Client, SendRequestFn } from '../client/types';
 import type { RequestObject, ResponseObject } from '../jsonrpc';
-import type { AnyServerMethodDef } from '../method';
+import type { AnyServerMethodDef, ServerDefToClientDef } from '../method';
 
 /**
  * A record of a server's method definitions by their names.
@@ -16,5 +16,5 @@ export type Server<TDef extends ServerDef> = {
   /** Extends the server with additional methods. */
   extend: <TNewDefs extends ServerDef>(defs: TNewDefs) => Server<TDef & TNewDefs>;
   /** Creates a client for the server. */
-  createClient: (sendRequest: SendRequestFn) => Client<TDef>;
+  createClient: (sendRequest: SendRequestFn) => Client<ServerDefToClientDef<TDef>>;
 };

@@ -15,7 +15,7 @@ describe('method', () => {
     });
 
     // @ts-expect-error - handler must not be present on client method definitions
-    lol.handler;
+    expect(lol.handler).toBeUndefined();
   });
 
   it('should allow a client method definition to be implemented as a server method definition', () => {
@@ -28,6 +28,7 @@ describe('method', () => {
 
     expect(greetServer.handler({ name: 'world' })).toBe('Hello, world!');
   });
+
   it('should return a server method definition', () => {
     const lol = method({
       paramsSchema: z.tuple([z.string()]),
@@ -39,6 +40,9 @@ describe('method', () => {
       resultSchema: z.boolean(),
       handler: expect.any(Function),
     });
+
+    // @ts-expect-error - implement must not be present on server method definitions
+    expect(lol.implement).toBeUndefined();
   });
 
   it('should throw an error if the params schema is invalid', () => {
