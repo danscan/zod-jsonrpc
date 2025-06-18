@@ -5,7 +5,7 @@ import type { ClientMethodDef, MethodParams, ServerMethodDef, ServerMethodHandle
 export function method<
   TParams extends MethodParams,
   TResult extends z.ZodType,
->(definition: { paramsSchema: TParams; resultSchema: TResult }, handler?: never): ClientMethodDef<TParams, TResult>;
+>(definition: { paramsSchema: TParams; resultSchema: TResult }): ClientMethodDef<TParams, TResult>;
 
 /** Creates a type-safe server method definition. */
 export function method<
@@ -16,7 +16,7 @@ export function method<
 export function method<
   TParams extends MethodParams,
   TResult extends z.ZodType,
->({ paramsSchema, resultSchema }: { paramsSchema: TParams; resultSchema: TResult; }, handler?: ServerMethodHandler<TParams, TResult>): ServerMethodDef<TParams, TResult> {
+>({ paramsSchema, resultSchema }: { paramsSchema: TParams; resultSchema: TResult; }, handler?: ServerMethodHandler<TParams, TResult>): ClientMethodDef<TParams, TResult> | ServerMethodDef<TParams, TResult> {
   // Validate the params schema type
   const paramsSchemaValid =
     paramsSchema instanceof z.ZodVoid ||
@@ -25,5 +25,19 @@ export function method<
     paramsSchema instanceof z.ZodObject;
   if (!paramsSchemaValid) throw new Error('Invalid params schema');
 
-  return { paramsSchema, resultSchema, handler } as any;
+  if (handler) {
+    // Return ServerMethodDef (no implement method)
+    return {
+      paramsSchema,
+      resultSchema,
+      handler,
+    };
+  } else {
+    // Return ClientMethodDef (with implement method)
+    return {
+      paramsSchema,
+      resultSchema,
+      implement: (handler) => method({ paramsSchema, resultSchema }, handler),
+    };
+  }
 }

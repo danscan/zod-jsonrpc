@@ -18,6 +18,16 @@ describe('method', () => {
     lol.handler;
   });
 
+  it('should allow a client method definition to be implemented as a server method definition', () => {
+    const greet = method({
+      paramsSchema: z.object({ name: z.string() }),
+      resultSchema: z.string(),
+    });
+
+    const greetServer = greet.implement(({ name }) => `Hello, ${name}!`);
+
+    expect(greetServer.handler({ name: 'world' })).toBe('Hello, world!');
+  });
   it('should return a server method definition', () => {
     const lol = method({
       paramsSchema: z.tuple([z.string()]),

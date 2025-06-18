@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 
+// Any types for use in generic parameters
 export type AnyClientMethodDef = ClientMethodDef<any, any>;
 export type AnyServerMethodDef = ServerMethodDef<any, any>;
 export type AnyServerMethodHandler = ServerMethodHandler<any, any>;
@@ -13,13 +14,15 @@ export interface ClientMethodDef<
   paramsSchema: TParams;
   /** The zod schema of the method result */
   resultSchema: TResult;
+  /** Takes a server method handler and returns an implemented ServerMethodDef */
+  implement: (handler: ServerMethodHandler<TParams, TResult>) => ServerMethodDef<TParams, TResult>;
 };
 
 /** A type-safe server-side method definition. */
 export interface ServerMethodDef<
   TParams extends MethodParams,
   TResult extends z.ZodType
-> extends ClientMethodDef<TParams, TResult> {
+> extends Omit<ClientMethodDef<TParams, TResult>, 'implement'> {
   /** The handler of the method */
   handler: ServerMethodHandler<TParams, TResult>;
 };
