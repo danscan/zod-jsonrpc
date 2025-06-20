@@ -1,8 +1,6 @@
-# @danscan/zod-jsonrpc
+# zod-jsonrpc
 
-Create JSON-RPC 2.0-compliant clients and servers that use Zod to validate requests and responses.
-
-Just define your methods with Zod schemas and handlers, and zod-jsonrpc will handle the rest.
+Create type-safe JSON-RPC API clients and servers in JS/TS using any transport.
 
 ## Features
 
@@ -31,7 +29,7 @@ npm add @danscan/zod-jsonrpc
 
 ## Quick Start
 
-Here's a minimal example to get you started:
+A minimal server example:
 
 ```typescript
 import { createServer, method } from '@danscan/zod-jsonrpc';
