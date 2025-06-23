@@ -54,4 +54,28 @@ describe('method', () => {
     // @ts-expect-error - return type does not match result schema
     method({ paramsSchema: z.void(), resultSchema: z.boolean() }, async () => 'test result');
   });
+
+  it('should allow a discriminated union as a params schema', () => {
+    const lol = method({
+      paramsSchema: z.discriminatedUnion('type', [z.object({ type: z.literal('a'), a: z.string() }), z.object({ type: z.literal('b'), b: z.string() })]),
+      resultSchema: z.boolean(),
+    });
+
+    expect(async () => {
+      const lolServer = lol.implement((params) => params.type === 'a' && params.a === 'a');
+      await lolServer.handler({ type: 'a', a: 'a' });
+    }).not.toThrow();
+
+    expect(async () => {
+      const lolServer = lol.implement((params) => params.type === 'b' && params.b === 'b');
+      await lolServer.handler({ type: 'b', b: 'b' });
+    }).not.toThrow();
+
+    // Type-level checks
+    // @ts-expect-error - type is not a or b
+    const lolServerWrongType = lol.implement((params) => params.type === 'c' && params.c === 'c');
+    const lolServer = lol.implement(() => true);
+    // @ts-expect-error - type is not a or b
+    lolServer.handler({ type: 'c', b: 'c' });
+  });
 });

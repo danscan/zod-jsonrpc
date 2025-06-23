@@ -22,7 +22,8 @@ export function method<
     paramsSchema instanceof z.ZodVoid ||
     paramsSchema instanceof z.ZodTuple ||
     paramsSchema instanceof z.ZodArray ||
-    paramsSchema instanceof z.ZodObject;
+    paramsSchema instanceof z.ZodObject ||
+    paramsSchema instanceof z.ZodDiscriminatedUnion;
   if (!paramsSchemaValid) throw new Error('Invalid params schema');
 
   if (handler) {

@@ -36,9 +36,10 @@ export type ServerMethodHandler<
 /** Valid params types for methods */
 export type MethodParams =
   | z.ZodVoid
-  | z.ZodTuple<[z.ZodType, ...z.ZodType[]]>
-  | z.ZodArray<z.ZodType>
-  | z.ZodObject<Record<string, z.ZodType>>;
+  | z.ZodTuple
+  | z.ZodArray
+  | z.ZodObject
+  | z.ZodDiscriminatedUnion;
 
 // –
 // Utility types
