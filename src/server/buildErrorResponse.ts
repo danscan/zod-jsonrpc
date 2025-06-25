@@ -1,4 +1,4 @@
-import { JSONRPCError, type JSONRPCRequest, JSONRPCResponseSchema } from "../jsonrpc";
+import { JSONRPCError, type JSONRPCRequest, JSONRPCResponseSchema } from "../jsonrpc/index.js";
 
 /**
 * Builds a JSON-RPC 2.0 error response for a given error and request ID.
