@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import { JSONRPCError } from './JSONRPCError';
+import { JSONRPCError } from './JSONRPCError.js';
 
 /**
  * JSON-RPC 2.0 Request Object Specification:

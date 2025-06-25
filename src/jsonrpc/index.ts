@@ -1,4 +1,4 @@
-export * from './JSONRPCError';
-export * from './JSONRPCSchemas';
-export * from './types';
+export * from './JSONRPCError.js';
+export * from './JSONRPCSchemas.js';
+export * from './types.js';
 

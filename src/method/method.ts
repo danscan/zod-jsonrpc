@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import type { ClientMethodDef, MethodParams, ServerMethodDef, ServerMethodHandler } from './types';
+import type { ClientMethodDef, MethodParams, ServerMethodDef, ServerMethodHandler } from './types.js';
 
 /** Creates a type-safe client method definition. */
 export function method<

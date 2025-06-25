@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
-import { createClient } from '../client';
-import { SendRequestFn } from '../client/types';
+import { createClient } from '../client/index.js';
+import { SendRequestFn } from '../client/types.js';
 import {
   type BatchRequestObject,
   JSONRPCError,
@@ -11,10 +11,10 @@ import {
   JSONRPCResponseSchema,
   type RequestObject,
   type ResponseObject,
-} from '../jsonrpc';
-import { type AnyServerMethodDef, method, type ServerDefToClientDef } from '../method';
-import { buildErrorResponse } from './buildErrorResponse';
-import type { Server, ServerDef } from './types';
+} from '../jsonrpc/index.js';
+import { type AnyServerMethodDef, method, type ServerDefToClientDef } from '../method/index.js';
+import { buildErrorResponse } from './buildErrorResponse.js';
+import type { Server, ServerDef } from './types.js';
 
 /**
  * Creates a JSON-RPC 2.0 server.

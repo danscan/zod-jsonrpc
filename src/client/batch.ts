@@ -1,7 +1,7 @@
 import { z } from 'zod/v4';
-import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseBatchSchema, type JSONRPCRequest } from '../jsonrpc';
-import type { AnyClientMethodDef, ClientMethodDef } from '../method';
-import type { ClientDef, SendRequestFn } from './types';
+import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseBatchSchema, type JSONRPCRequest } from '../jsonrpc/index.js';
+import type { AnyClientMethodDef, ClientMethodDef } from '../method/index.js';
+import type { ClientDef, SendRequestFn } from './types.js';
 
 /** The batch method of a client. */
 export type ClientBatch<TDef extends ClientDef> = <TConfig extends BatchRequestConfig>(

@@ -1,7 +1,8 @@
 import { z } from 'zod/v4';
-import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseSchema } from '../jsonrpc';
-import { batch, type BatchContext, type BatchRequestConfig } from './batch';
-import type { Client, ClientDef, SendRequestFn } from './types';
+import { JSONRPCError } from '../jsonrpc/JSONRPCError.js';
+import { JSONRPCRequestSchema, JSONRPCResponseSchema } from '../jsonrpc/JSONRPCSchemas.js';
+import { batch, type BatchContext, type BatchRequestConfig } from './batch.js';
+import type { Client, ClientDef, SendRequestFn } from './types.js';
 
 export function createClient<TDef extends ClientDef>(defs: TDef, sendRequest: SendRequestFn): Client<TDef> {
   const baseClient = {
