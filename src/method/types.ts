@@ -7,7 +7,7 @@ export type AnyServerMethodHandler = ServerMethodHandler<any, any>;
 
 /** A type-safe client-side method definition. */
 export interface ClientMethodDef<
-  TParams extends MethodParams,
+  TParams extends MethodParamsSchema,
   TResult extends StandardSchemaV1
 > {
   /** The schema of the method parameters */
@@ -20,7 +20,7 @@ export interface ClientMethodDef<
 
 /** A type-safe server-side method definition. */
 export interface ServerMethodDef<
-  TParams extends MethodParams,
+  TParams extends MethodParamsSchema,
   TResult extends StandardSchemaV1
 > extends Omit<ClientMethodDef<TParams, TResult>, 'implement'> {
   /** The handler of the method */
@@ -29,15 +29,18 @@ export interface ServerMethodDef<
 
 /** A type-safe server-side method handler. */
 export type ServerMethodHandler<
-  TParams extends MethodParams,
+  TParams extends MethodParamsSchema,
   TResult extends StandardSchemaV1
-> = (params: StandardSchemaV1.InferInput<TParams>) => MaybePromise<StandardSchemaV1.InferOutput<TResult>>;
+> = (params: StandardSchemaV1.InferOutput<TParams>) => MaybePromise<StandardSchemaV1.InferOutput<TResult>>;
 
-/** Valid params types for methods */
-export type MethodParams<T extends
+/** Params schema type for methods */
+export type MethodParamsSchema<TShape extends MethodParamsShape = any> = StandardSchemaV1<TShape, TShape>;
+
+/** Method params can have the shape of a record, array/tuple, or void */
+export type MethodParamsShape =
   | Record<string, unknown>
   | unknown[]
-  | void = any> = StandardSchemaV1<T, T>;
+  | void;
 
 // –
 // Utility types

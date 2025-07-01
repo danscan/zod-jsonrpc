@@ -2,11 +2,12 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { JSONRPCError, JSONRPCRequestSchema, JSONRPCResponseBatchSchema, type JSONRPCRequest } from '../jsonrpc/index.js';
 import type { AnyClientMethodDef, ClientMethodDef } from '../method/index.js';
 import { parse, safeParse } from '../validator/index.js';
-import type { ClientDef, SendRequestFn } from './types.js';
+import type { CallMethodOptions, ClientDef, SendRequestFn } from './types.js';
 
 /** The batch method of a client. */
 export type ClientBatch<TDef extends ClientDef> = <TConfig extends BatchRequestConfig>(
-  getBatchRequestConfig: (ctx: BatchContext<TDef>) => TConfig
+  getBatchRequestConfig: (ctx: BatchContext<TDef>) => TConfig,
+  options?: CallMethodOptions
 ) => Promise<BatchResult<TConfig>>;
 
 /** A record of request builders by method names. */
@@ -33,7 +34,7 @@ export type BatchResultEntry<TMethodDef extends AnyClientMethodDef> =
   | { ok: false; error: JSONRPCError };
 
 /** Builds a batch context from a client definition. */
-function buildBatchContext<TDef extends ClientDef>(defs: TDef): BatchContext<TDef> {
+function buildBatchContext<TDef extends ClientDef>(defs: TDef, { validateParams = true }: CallMethodOptions = {}): BatchContext<TDef> {
   const ctx: Record<string, (p: any) => BatchRequestConfigEntry<TDef[keyof TDef]>> = {};
 
   for (const [methodName, methodDef] of Object.entries(defs)) {
@@ -41,7 +42,9 @@ function buildBatchContext<TDef extends ClientDef>(defs: TDef): BatchContext<TDe
       ctx[methodName] = (params: any) => [methodDef, parse(JSONRPCRequestSchema, {
         jsonrpc: '2.0',
         method: methodName,
-        params: parse(methodDef.paramsSchema, params),
+        params: validateParams
+          ? parse(methodDef.paramsSchema, params)
+          : params,
         id: crypto.randomUUID(),
       })] as BatchRequestConfigEntry<TDef[keyof TDef]>;
     } catch (error) {
@@ -60,8 +63,9 @@ export async function batch<
   defs: TDef,
   getBatchRequestConfig: (ctx: BatchContext<TDef>) => TBatchConfig,
   sendRequest: SendRequestFn,
+  { validateParams = true, validateResults = true }: CallMethodOptions = {},
 ): Promise<BatchResult<TBatchConfig>> {
-  const ctx = buildBatchContext(defs);
+  const ctx = buildBatchContext(defs, { validateParams });
   const batchConfig = getBatchRequestConfig(ctx);
 
   // Send the requests
@@ -90,7 +94,7 @@ export async function batch<
     try {
       results[localRequestId] = error
         ? { ok: false, error: new JSONRPCError(error.code, error.message, error.data) }
-        : { ok: true, value: parse(methodDef.resultSchema, result) };
+        : { ok: true, value: validateResults ? parse(methodDef.resultSchema, result) : result };
     } catch (error) {
       results[localRequestId] = { ok: false, error: JSONRPCError.InternalError({ message: `Invalid result in batch result for entry ${localRequestId}`, data: { error, result } }) };
     }

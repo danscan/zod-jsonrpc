@@ -68,7 +68,8 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs): Server<TD
         });
       }
 
-      return createClient(clientMethods, sendRequest);
+      // Return a client that delegates validation of params and results to the server to support schema transformations (different input and output types)
+      return createClient(clientMethods, sendRequest).raw();
     },
   };
 }

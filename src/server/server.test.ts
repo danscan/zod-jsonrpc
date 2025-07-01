@@ -26,6 +26,24 @@ const server = createServer({
   }, async () => {
     throw JSONRPCError.InternalError({ message: 'Intentional test error', data: 'test data' });
   }),
+
+  // Test arbitrary error handling
+  arbitraryError: method({
+    paramsSchema: z.void(),
+    resultSchema: z.string(),
+  }, async () => {
+    throw new Error('Something went wrong');
+  }),
+
+  // Test error with custom data
+  errorWithData: method({
+    paramsSchema: z.void(),
+    resultSchema: z.string(),
+  }, async () => {
+    const error = new Error('Custom error');
+    (error as any).customData = { timestamp: Date.now() };
+    throw error;
+  }),
 });
 
 const serverWithSchemaError = createServer({
@@ -69,6 +87,45 @@ describe('server.request', () => {
       jsonrpc: '2.0',
       id: 1,
       error: { code: -32603, message: 'Internal error: Intentional test error', data: 'test data' },
+    });
+  });
+
+  it('converts arbitrary errors to JSON RPC 2.0 Internal Error', async () => {
+    const result = await server.request({
+      id: 1,
+      method: 'arbitraryError',
+    });
+    expect(result).toMatchObject({
+      jsonrpc: '2.0',
+      id: 1,
+      error: { 
+        code: -32603, 
+        message: 'Internal error',
+        data: expect.objectContaining({
+          message: 'Something went wrong'
+        })
+      },
+    });
+  });
+
+  it('preserves error data when converting arbitrary errors', async () => {
+    const result = await server.request({
+      id: 1,
+      method: 'errorWithData',
+    });
+    expect(result).toMatchObject({
+      jsonrpc: '2.0',
+      id: 1,
+      error: { 
+        code: -32603, 
+        message: 'Internal error',
+        data: expect.objectContaining({
+          message: 'Custom error',
+          customData: expect.objectContaining({
+            timestamp: expect.any(Number)
+          })
+        })
+      },
     });
   });
 
@@ -132,6 +189,34 @@ describe('server.request', () => {
     expect(notificationParam).toBe('The notification was received');
   });
 
+  it('handles mixed success and error results in batch requests', async () => {
+    const result = await server.request([
+      {
+        id: 1,
+        method: 'greeting',
+        params: ['Dan'],
+      },
+      {
+        id: 2,
+        method: 'arbitraryError',
+      },
+      {
+        id: 3,
+        method: 'internalError',
+      },
+      {
+        id: 4,
+        method: 'unknownMethod',
+      },
+    ]);
+    expect(result).toMatchObject([
+      { jsonrpc: '2.0', id: 1, result: 'Hello, Dan!' },
+      { jsonrpc: '2.0', id: 2, error: { code: -32603, message: 'Internal error' } },
+      { jsonrpc: '2.0', id: 3, error: { code: -32603, message: 'Internal error: Intentional test error' } },
+      { jsonrpc: '2.0', id: 4, error: { code: -32601, message: 'Method not found' } },
+    ]);
+  });
+
   it('handles string request ids', async () => {
     const result = await server.request([{ jsonrpc: '2.0', id: '1', method: 'greeting', params: ['Dan'] }]);
     expect(result).toMatchObject([{ jsonrpc: '2.0', id: '1', result: 'Hello, Dan!' }]);
@@ -183,5 +268,58 @@ describe('server.createClient', () => {
     const client = server.createClient(async (req) => server.request(req));
     const result = await client.greeting(['Dan']);
     expect(result).toBe('Hello, Dan!');
+  });
+
+  it('should allow a schema with transformation (different input and output types) as params schema', async () => {
+    const transformServer = createServer({
+      transform: method({
+        paramsSchema: z.tuple([z.string()]).transform(([val]) => ({ transformed: val })),
+        resultSchema: z.boolean(),
+      }, (params) => params.transformed === 'test'),
+    });
+    const client = transformServer.createClient(async (req) => transformServer.request(req));
+    const result = await client.transform(['test']);
+    expect(result).toBe(true);
+  });
+
+  describe('raw client variants', () => {
+    it('rawParams skips client validation but server still validates', async () => {
+      let serverResponse: any;
+      const client = server.createClient(async (req) => {
+        serverResponse = await server.request(req);
+        return serverResponse;
+      }).rawParams();
+      
+      // With rawParams, client doesn't validate params, but server still rejects invalid params
+      // @ts-expect-error - testing invalid params type
+      expect(() => client.greeting([123])).toThrow();
+      
+      // Assert the error came from the server
+      expect(serverResponse).toMatchObject({
+        jsonrpc: '2.0',
+        error: {
+          code: -32602,
+          message: expect.stringContaining('Invalid params'),
+        },
+      });
+    });
+
+    it('raw skips both param and result validation', async () => {
+      let serverResponse: any;
+      const client = server.createClient(async (req) => {
+        serverResponse = await server.request(req);
+        return serverResponse;
+      }).raw();
+      
+      // Client doesn't validate params, server rejects them
+      // @ts-expect-error - testing invalid params type
+      expect(() => client.greeting([123])).toThrow();
+      
+      // Assert error came from server
+      expect(serverResponse).toMatchObject({
+        jsonrpc: '2.0',
+        error: { code: -32602 },
+      });
+    });
   });
 });

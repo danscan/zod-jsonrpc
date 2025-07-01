@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test';
 import { z } from 'zod/v4';
-import { createServer } from '../server';
 import { method } from './method';
 
 describe('method', () => {
@@ -73,5 +72,29 @@ describe('method', () => {
     const lolServer = lol.implement(() => true);
     // @ts-expect-error - type is not a or b
     lolServer.handler({ type: 'c', b: 'c' });
+  });
+
+  it('should allow a method params schema to be a record, array/tuple, or void', () => {
+    expect(() => {
+      const record = method({
+        paramsSchema: z.object({ name: z.string() }),
+        resultSchema: z.boolean(),
+      });
+  
+      const array = method({
+        paramsSchema: z.array(z.string()),
+        resultSchema: z.boolean(),
+      });
+  
+      const tuple = method({
+        paramsSchema: z.tuple([z.string()]),
+        resultSchema: z.boolean(),
+      });
+  
+      const voId = method({
+        paramsSchema: z.void(),
+        resultSchema: z.boolean(),
+      });
+    }).not.toThrow();
   });
 });
