@@ -4,15 +4,12 @@ Create type-safe JSON-RPC API clients and servers in JS/TS using any transport.
 
 ## Features
 
-- **JSON-RPC 2.0-compliant** - Full specification compliance, including batch requests, errors, and notifications
-- **Works with standard-schema validation libraries** - Uses `@standard-schema/spec` to support Zod, Effect Schema, Valibot, ArkType, and more
-- **Transport-agnostic** - Works with HTTP, WebSockets, IPC, or any custom transport layer
+- **JSON-RPC 2.0-compliant** - Comprehensive spec compliance including batch requests, notifications, and errors
+- **Multiple schema validation libraries** - Uses `@standard-schema/spec` to support Zod, Effect Schema, Valibot, ArkType, and more
+- **Transport-agnostic** - Works with HTTP, WebSockets, or any custom transport layer
 - **Automatic request handling** - Batch requests, notifications, and error responses handled automatically
 - **Raw client modes** - Disable client-side validation for performance or when server validation is guaranteed
-- **Schema transformations** - Raw clients allow schemas to transform data only once (on the server)
-- **Type safety** - Full TypeScript support with automatic inference for requests and responses
-- **Minimal bundle size impact** - Has but one internal dependency on `zod/v4-mini`
-- **Flexible validation** - Enable/disable client-side params/result validation
+- **Type safety** - Full TypeScript support with automatic inference for requests and responses, including batch requests
 
 ### Schema Validation Libraries
 
@@ -33,162 +30,150 @@ npm add @danscan/zod-jsonrpc
 
 ## Quick Start
 
-Create a complete JSON-RPC setup in minutes:
+`zod-jsonrpc` makes it easy to create type-safe JSON-RPC servers and clients.
 
 ```typescript
 import { createServer, createClient, method } from '@danscan/zod-jsonrpc';
 import { z } from 'zod/v4';
 
-// 1. Define your API methods
+// Define methods
 const greet = method({
   paramsSchema: z.object({ name: z.string() }),
   resultSchema: z.string(),
 }, ({ name }) => `Hello, ${name}!`);
 
-// 2. Create a server
+// Create server and client
 const server = createServer({ greet });
-
-// 3. Create a client (with validation)
 const client = createClient({ greet }, async (request) => {
-  // Your transport layer - could be HTTP, WebSocket, etc.
-  return server.request(request); // Direct call for demo
+  // Your transport layer here: fetch, WebSocket, etc.
+  return server.request(request);
 });
 
-// 4. Make type-safe calls
+// Make type-safe calls
 const greeting = await client.greet({ name: 'World' });
 console.log(greeting); // "Hello, World!"
 ```
 
-For production, you'll typically separate the client and server across different processes or machines.
+## Methods
 
-## Usage
-
-### Creating a Server
-
-Define methods with input/output validation and implement your business logic:
+Methods are the core building blocks of your JSON-RPC API. They define the input and output schemas for a given method, and the handler function that will be called when the method is invoked.
 
 ```typescript
-import { createServer, method, JSONRPC2Error } from '@danscan/zod-jsonrpc';
+const greet = method({
+  paramsSchema: z.object({ name: z.string() }),
+  resultSchema: z.string(),
+}, ({ name }) => `Hello, ${name}!`);
+```
+
+You can also define methods with a `paramsSchema` and a `resultSchema` only, and provide a handler function later:
+
+```typescript
+// Import this in your client and server
+export const greet = method({
+  paramsSchema: z.object({ name: z.string() }),
+  resultSchema: z.string(),
+});
+
+// In your server implementation:
+import { greet } from './methods';
+
+const server = createServer({
+  greet: greet.implement(({ name }) => `Hello, ${name}!`),
+});
+```
+
+## Creating Servers
+
+Start by creating a server with your methods:
+
+```typescript
+import { createServer, method, JSONRPCError } from '@danscan/zod-jsonrpc';
 import { z } from 'zod/v4';
 
 const server = createServer({
-  greet: method({
-    paramsSchema: z.object({ name: z.string() }),
-    resultSchema: z.string(),
-  }, ({ name }) => `Hello, ${name}!`),
+  add: method({
+    paramsSchema: z.object({ a: z.number(), b: z.number() }),
+    resultSchema: z.number(),
+  }, ({ a, b }) => a + b),
 
   divide: method({
-    paramsSchema: z.object({ 
-      dividend: z.number(), 
-      divisor: z.number() 
-    }),
+    paramsSchema: z.object({ dividend: z.number(), divisor: z.number() }),
     resultSchema: z.number(),
   }, ({ dividend, divisor }) => {
     if (divisor === 0) {
-      throw new JSONRPC2Error.InvalidParams({
-        message: 'Division by zero',
-        data: { divisor },
-      });
+      throw new JSONRPCError.InvalidParams({ message: 'Cannot divide by zero' });
     }
     return dividend / divisor;
   }),
-
-  // Method that might throw an arbitrary error
-  processData: method({
-    paramsSchema: z.object({ data: z.string() }),
-    resultSchema: z.string(),
-  }, async ({ data }) => {
-    // Any error thrown here becomes a JSON-RPC Internal Error
-    if (!data.trim()) {
-      throw new Error('Data cannot be empty');
-    }
-    return `Processed: ${data}`;
-  }),
 });
-
-// Handle single requests
-const result = await server.request({
-  id: 1,
-  method: 'greet',
-  params: { name: 'danscan' },
-  jsonrpc: '2.0',
-});
-// { id: 1, result: 'Hello, danscan!', jsonrpc: '2.0' }
-
-// Handle batch requests automatically
-const results = await server.request([
-  { id: 1, method: 'greet', params: { name: 'Alice' }, jsonrpc: '2.0' },
-  { id: 2, method: 'divide', params: { dividend: 10, divisor: 2 }, jsonrpc: '2.0' },
-  { id: 3, method: 'divide', params: { dividend: 10, divisor: 0 }, jsonrpc: '2.0' },
-]);
-// [
-//   { id: 1, result: 'Hello, Alice!', jsonrpc: '2.0' },
-//   { id: 2, result: 5, jsonrpc: '2.0' },
-//   { id: 3, error: { code: -32602, message: 'Invalid params: Division by zero', data: { divisor: 0 } }, jsonrpc: '2.0' }
-// ]
 ```
 
-### Error Handling
+The server automatically handles single requests, batch requests, and notifications:
 
-Server method handlers can throw any type of error, and the server will automatically return appropriate JSON-RPC 2.0 error responses:
+```typescript
+// Single request
+const result = await server.request({
+  id: 1,
+  method: 'add',
+  params: { a: 5, b: 3 },
+  jsonrpc: '2.0',
+});
+// { id: 1, result: 8, jsonrpc: '2.0' }
+
+// Batch request
+const results = await server.request([
+  { id: 1, method: 'add', params: { a: 5, b: 3 }, jsonrpc: '2.0' },
+  { id: 2, method: 'divide', params: { dividend: 10, divisor: 2 }, jsonrpc: '2.0' },
+]);
+// [{ id: 1, result: 8, jsonrpc: '2.0' }, { id: 2, result: 5, jsonrpc: '2.0' }]
+```
+
+## Error Handling
+
+Servers automatically convert any thrown error into proper JSON-RPC responses:
 
 ```typescript
 const server = createServer({
-  // Throw specific JSON-RPC errors for controlled error responses
-  validateInput: method({
-    paramsSchema: z.object({ value: z.number() }),
+  validateAge: method({
+    paramsSchema: z.object({ age: z.number() }),
     resultSchema: z.boolean(),
-  }, ({ value }) => {
-    if (value < 0) {
-      throw new JSONRPC2Error.InvalidParams({
-        message: 'Value must be positive',
-        data: { value },
-      });
+  }, ({ age }) => {
+    if (age < 0) {
+      // You can easily construct and throw a JSONRPC-specific error (ParseError, InvalidRequest, MethodNotFound, InvalidParams, InternalError)
+      throw JSONRPCError.InvalidParams({ message: 'Age cannot be negative', data: { age } });
+    }
+    if (age >= 150) {
+      // Any other kind of thrown error becomes a JSONRPCError.InternalError
+      throw new Error(`Please don't use Bryan Johnson's age`);
     }
     return true;
   }),
-
-  // Arbitrary errors are automatically converted to Internal Errors
-  riskyOperation: method({
-    paramsSchema: z.void(),
-    resultSchema: z.string(),
-  }, async () => {
-    // This will become: { code: -32603, message: 'Internal error', data: { message: 'Database connection failed', ... } }
-    throw new Error('Database connection failed');
-  }),
 });
+```
 
-// Single request error handling
-const errorResult = await server.request({
-  id: 1,
-  method: 'riskyOperation',
-});
-// { jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error', data: { message: 'Database connection failed' } } }
+Errors are handled individually in batch requests, so one failure doesn't affect others:
 
-// Batch request error handling - errors are handled individually
-const batchResults = await server.request([
-  { id: 1, method: 'validateInput', params: { value: 5 } },
-  { id: 2, method: 'validateInput', params: { value: -1 } },
-  { id: 3, method: 'riskyOperation' },
+```typescript
+const results = await server.request([
+  { id: 1, method: 'validateAge', params: { age: 25 }, jsonrpc: '2.0' },
+  { id: 2, method: 'validateAge', params: { age: -5 }, jsonrpc: '2.0' },
+  { id: 3, method: 'validateAge', params: { age: 200 }, jsonrpc: '2.0' },
 ]);
 // [
-//   { jsonrpc: '2.0', id: 1, result: true },
-//   { jsonrpc: '2.0', id: 2, error: { code: -32602, message: 'Invalid params: Value must be positive', data: { value: -1 } } },
-//   { jsonrpc: '2.0', id: 3, error: { code: -32603, message: 'Internal error', data: { message: 'Database connection failed' } } }
+//   { id: 1, result: true, jsonrpc: '2.0' },
+//   { id: 2, error: { code: -32602, message: 'Invalid params: Age cannot be negative' }, jsonrpc: '2.0' },
+//   { id: 3, error: { code: -32603, message: 'Internal error', data: { message: 'Please don\'t use Bryan Johnson\'s age' } }, jsonrpc: '2.0' }
 // ]
 ```
 
-This error handling works consistently across both single requests and batch requests, ensuring that one failing method doesn't prevent other methods in a batch from executing.
+## Creating Clients
 
-### Creating a Client
-
-Build type-safe clients that automatically validate requests and responses:
+Build type-safe clients that validate requests and responses:
 
 ```typescript
 import { createClient, method } from '@danscan/zod-jsonrpc';
-import { z } from 'zod/v4';
 
-// Define your transport function
+// Define your transport
 const sendRequest = async (request) => {
   const response = await fetch('/api/jsonrpc', {
     method: 'POST',
@@ -200,125 +185,118 @@ const sendRequest = async (request) => {
 
 // Create client with method definitions
 const client = createClient({
-  greet: method({
-    paramsSchema: z.object({ name: z.string() }),
-    resultSchema: z.string(),
-  }),
-  
-  getUser: method({
-    paramsSchema: z.object({ id: z.uuid() }),
-    resultSchema: z.object({
-      id: z.uuid(),
-      name: z.string(),
-      email: z.email(),
-    }),
+  add: method({
+    paramsSchema: z.object({ a: z.number(), b: z.number() }),
+    resultSchema: z.number(),
   }),
 }, sendRequest);
 
-// Make individual calls
-const greeting = await client.greet({ name: 'danscan' });
-
-// Make batch calls with named results
-const results = await client.batch((ctx) => ({
-  greeting: ctx.greet({ name: 'Dan' }),
-  user: ctx.getUser({ id: '123e4567-e89b-12d3-a456-426614174000' }),
-}));
-// {
-//   greeting: { ok: true, value: 'Hello, Dan!' },
-//   user: { ok: true, value: { id: '...', name: 'Dan', email: 'dan@selfref.com' } }
-// }
+// Make calls with full type safety
+const sum = await client.add({ a: 5, b: 3 }); // number
 ```
 
-### Handling Batch Results with Errors
+## Batch Requests
 
-Batch requests return results with a consistent structure that allows type-safe error handling:
+Clients provide a convenient API for batch requests with named results:
 
 ```typescript
 const results = await client.batch((ctx) => ({
-  validUser: ctx.getUser({ id: 'valid-uuid' }),
-  invalidUser: ctx.getUser({ id: 'invalid-id' }),
-  greeting: ctx.greet({ name: 'Dan' }),
+  // Name each call in the batch so you can easily access the results by name
+  // All calls are executed in parallel, so you can use the results as they come in
+  sum: ctx.add({ a: 5, b: 3 }),
+  product: ctx.multiply({ a: 5, b: 3 }),
+  quotient: ctx.divide({ dividend: 10, divisor: 2 }),
 }));
 
-// Type-safe error handling with .ok property
-if (results.validUser.ok) {
-  // results.validUser is { ok: true, value: UserType }
-  console.log('User found:', results.validUser.value.name);
+// Handle results with type-safe error checking
+if (results.sum.ok) {
+  console.log('Sum:', results.sum.value); // number
 } else {
-  // results.validUser is { ok: false, error: JSONRPCError }
-  console.error('Failed to get user:', results.validUser.error.message);
+  console.error('Sum failed:', results.sum.error.message);
 }
-```
 
-The `.ok` property enables TypeScript to automatically narrow the type, giving you full type safety when accessing either the `value` (on success) or `error` (on failure).
-
-### Raw Client Features
-
-For performance optimization or when you control both client and server, you can disable client-side validation:
-
-#### Server-Generated Raw Clients
-
-When creating a client from a server, you get a raw client by default. This allows schema transformations to happen only once (on the server):
-
-```typescript
-const server = createServer({
-  transform: method({
-    paramsSchema: z.string().transform(s => s.toUpperCase()),
-    resultSchema: z.string().transform(s => `Result: ${s}`),
-  }, (input) => input), // input is already transformed to uppercase
+// Process all results
+Object.entries(results).forEach(([operation, result]) => {
+  if (result.ok) {
+    console.log(`${operation}:`, result.value);
+  } else {
+    console.error(`${operation} failed:`, result.error.message);
+  }
 });
-
-// Raw client - no double transformation
-const rawClient = server.createClient(sendRequest);
-const result = await rawClient.transform('hello'); // Server transforms: 'hello' -> 'HELLO' -> 'Result: HELLO'
-
-// Validating client - would double-transform
-const validatingClient = rawClient.validating();
 ```
 
-#### Manual Raw Mode
+## Using Schema Transformations
 
-Any client can be switched to raw mode to skip validation:
+Schemas that change your data in any way should usually only be applied once. If you provide a transforming schema in a method on both your client and server, you should use a raw client to avoid double transformation.
 
 ```typescript
-const client = createClient({ greet }, sendRequest);
+// This method is provided to the client and server
+const normalize = method({
+  paramsSchema: z.string().transform(s => s.toUpperCase()),
+  resultSchema: z.string().transform(s => `Result: ${s}`),
+}, (input) => input);
 
-// Skip all validation (params and results)
+
+const server = createServer({ normalize });
+
+// If you create your client manually, you can use the `raw` method to create a raw client
+// This way, the schema transformation is only applied on the server
+const client = createClient({ normalize }, sendRequest);
 const rawClient = client.raw();
-await rawClient.greet({ name: 'World' }); // No client-side validation
 
-// Skip only params validation
-const rawParamsClient = client.rawParams();
-await rawParamsClient.greet({ name: 'World' }); // Results still validated
-
-// Skip only results validation  
-const rawResultsClient = client.rawResults();
-await rawResultsClient.greet({ name: 'World' }); // Params still validated
-
-// Re-enable full validation
-const validatingClient = rawClient.validating();
-await validatingClient.greet({ name: 'World' }); // Full validation restored
+// When generating a client from a server, it will be a raw client by default
+const client = server.createClient(sendRequest);
 ```
 
-Raw clients are ideal when:
-- You control both client and server and trust the server's validation
-- You want maximum performance by avoiding duplicate validation
-- Your schemas include transformations that should only be applied once
-- You're building internal APIs where client-side validation is redundant
-
-### Integration with HTTP Servers
-
-Integrate with any HTTP framework:
+If you are only using zod-jsonrpc for the client, your schema transformations will only be applied once, so you don't need to use a raw client.
 
 ```typescript
-const jsonRpcServer = createServer({ greet, divide });
+const client = createClient({ normalize }, sendRequest);
+const result = await client.normalize('hello'); // "Result: HELLO"
+```
+
+## Raw Client Modes
+
+Client has methods that return a new client with different validation modes:
+
+- `client.raw()`: Skip all schema parsing on the client, delegating to the server
+- `client.rawParams()`: Skip only parameter validation on the client
+- `client.rawResults()`: Skip only result validation on the client
+- `client.validating()`: Re-enable all validation on the client
+
+```typescript
+const client = createClient({ add }, sendRequest);
+
+// Skip validation of both params and results
+const rawClient = client.raw();
+const result = await rawClient.add({ a: 5, b: 3 }); // No client-side validation
+
+// Skip only params validation (results still validated)
+const rawParamsClient = client.rawParams();
+
+// Skip only result validation (params still validated)
+const rawResultsClient = client.rawResults();
+
+// Re-enable params and results validation
+const validatingClient = rawClient.validating();
+
+// For example, to disable validation on one request:
+client.raw().add({ a: 5, b: 3 });
+```
+
+## Transport Integration
+
+Integrate with any HTTP framework or transport:
+
+```typescript
+const jsonRpcServer = createServer({ add, divide });
 
 // Bun
 Bun.serve({
   fetch: async (req) => {
-    const jsonRpcRequest = await req.json();
-    const jsonRpcResponse = await jsonRpcServer.request(jsonRpcRequest);
-    return Response.json(jsonRpcResponse);
+    const request = await req.json();
+    const response = await jsonRpcServer.request(request);
+    return Response.json(response);
   }
 });
 
@@ -331,148 +309,53 @@ export async function POST(request: Request) {
 
 // Express.js
 app.post('/jsonrpc', async (req, res) => {
-  const jsonRpcResponse = await jsonRpcServer.request(req.body);
-  res.json(jsonRpcResponse);
+  const response = await jsonRpcServer.request(req.body);
+  res.json(response);
 });
-```
-
-### Client from Server
-
-Create a client directly from your server definition to ensure consistency:
-
-```typescript
-import { server } from './server';
-
-const sendRequest = async (request) => {
-  const response = await fetch('/api/jsonrpc', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
-  return response.json();
-};
-
-// `server.createClient` returns a raw client by default since the server guarantees validation
-const client = server.createClient(sendRequest);
-
-// Enable client-side params/results validation if needed
-const validatingClient = client.validating();
 ```
 
 ## Recommended Project Structure
 
-For larger applications, separate method definitions from implementations to enable code sharing and independent versioning:
-
-### Directory Structure
+For larger applications, separate method definitions from implementations:
 
 ```
 src/
   api/
-    methods/
-      index.ts          # Exports all methods
-      auth.ts           # Authentication methods
-      user.ts           # User management methods
-    client.ts           # Client configuration
-    server.ts           # Server implementation
-  // ... rest of your app
+    methods/          # Shared method definitions
+      user.ts
+      auth.ts
+    server.ts         # Server implementation
+    client.ts         # Client setup
 ```
 
-### Method Definitions
+Define methods separately to share between client and server:
 
 ```typescript
 // api/methods/user.ts
-import { method } from '@danscan/zod-jsonrpc';
-import { z } from 'zod/v4';
-
-/** Get user profile by ID */
 export const getUser = method({
-  paramsSchema: z.object({ 
-    userId: z.uuid() 
-  }),
+  paramsSchema: z.object({ id: z.string().uuid() }),
   resultSchema: z.object({
-    id: z.uuid(),
+    id: z.string().uuid(),
     name: z.string(),
-    email: z.email(),
-    createdAt: z.iso.datetime(),
+    email: z.string().email(),
   }),
 });
 
-/** Update user profile */
-export const updateUser = method({
-  paramsSchema: z.object({
-    userId: z.uuid(),
-    updates: z.object({
-      name: z.string().optional(),
-      email: z.email().optional(),
-    }),
-  }),
-  resultSchema: z.object({
-    success: z.boolean(),
-    user: z.object({
-      id: z.uuid(),
-      name: z.string(),
-      email: z.email(),
-    }),
-  }),
-});
-```
-
-```typescript
-// api/methods/index.ts
-export * from './auth';
-export * from './user';
-```
-
-### Server Implementation
-
-```typescript
 // api/server.ts
-import { createServer } from '@danscan/zod-jsonrpc';
 import * as methods from './methods';
-import { getUserFromDb, updateUserInDb } from '../db';
 
 export const server = createServer({
-  getUser: methods.getUser.implement(async ({ userId }) => {
-    const user = await getUserFromDb(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return user;
-  }),
-
-  updateUser: methods.updateUser.implement(async ({ userId, updates }) => {
-    const user = await updateUserInDb(userId, updates);
-    return {
-      success: true,
-      user,
-    };
+  getUser: methods.getUser.implement(async ({ id }) => {
+    return await getUserFromDatabase(id);
   }),
 });
-```
 
-### Client Setup
-
-```typescript
 // api/client.ts
-import { createClient } from '@danscan/zod-jsonrpc';
 import * as methods from './methods';
 
-const sendRequest = async (request) => {
-  const response = await fetch('/api/jsonrpc', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
-  return response.json();
-};
-
-export const apiClient = createClient({
+export const client = createClient({
   getUser: methods.getUser,
-  updateUser: methods.updateUser,
 }, sendRequest);
-
-// For internal use where you trust the server validation
-export const rawApiClient = apiClient.raw();
 ```
 
-This structure enables you to share method definitions between client and server, version your API independently, and maintain type safety across your entire RPC layer.
+This structure enables you to share method definitions, maintain type safety across your entire API, and version your API independently of implementation details.
