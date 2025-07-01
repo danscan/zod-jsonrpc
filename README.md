@@ -11,7 +11,7 @@ Create type-safe JSON-RPC API clients and servers in JS/TS using any transport.
 - **Raw client modes** - Disable client-side validation for performance or when server validation is guaranteed
 - **Schema transformations** - Raw clients allow schemas to transform data only once (on the server)
 - **Type safety** - Full TypeScript support with automatic inference for requests and responses
-- **Zero dependencies** - Only peer dependency on Zod, uses `zod/v4-mini` for minimal bundle impact
+- **Minimal bundle size impact** - Has but one internal dependency on `zod/v4-mini`
 - **Flexible validation** - Enable/disable validation per client or per method call
 
 ### Schema Validation Libraries
