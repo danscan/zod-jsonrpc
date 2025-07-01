@@ -1,4 +1,4 @@
-import type { z } from 'zod/v4';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { RequestObject } from '../jsonrpc/index.js';
 import type { AnyClientMethodDef, ClientMethodDef } from '../method/index.js';
 import type { ClientBatch } from './batch.js';
@@ -18,7 +18,7 @@ export type ClientDef = Record<string, AnyClientMethodDef>;
  */
 export type ClientMethods<TDef extends ClientDef> = {
   [K in keyof TDef]: TDef[K] extends ClientMethodDef<infer TParams, infer TResult>
-    ? (params: z.infer<TParams>) => Promise<z.infer<TResult>>
+    ? (params: StandardSchemaV1.InferInput<TParams>) => Promise<StandardSchemaV1.InferOutput<TResult>>
     : never;
 };
 

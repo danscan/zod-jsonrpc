@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { z } from 'zod/v4';
+import { createServer } from '../server';
 import { method } from './method';
 
 describe('method', () => {
@@ -43,11 +44,6 @@ describe('method', () => {
 
     // @ts-expect-error - implement must not be present on server method definitions
     expect(lol.implement).toBeUndefined();
-  });
-
-  it('should throw an error if the params schema is invalid', () => {
-    // @ts-expect-error - params schema is invalid
-    expect(() => method({ paramsSchema: z.string(), resultSchema: z.boolean() })).toThrow('Invalid params schema');
   });
 
   it('should have a type error if the return type of the handler does not match the result schema', () => {

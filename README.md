@@ -5,19 +5,23 @@ Create type-safe JSON-RPC API clients and servers in JS/TS using any transport.
 ## Features
 
 - JSON-RPC 2.0-compliant
+- Supports many schema validation libraries (see [below](#schema-validation-libraries)), not just Zod!
 - Transport-agnostic (supports HTTP, WebSockets, and more)
 - Automatically handles batch requests, notification requests, and errors
 - Rich documentation comments referencing the JSON-RPC 2.0 specification
 - Exports Zod schemas and types for JSON-RPC requests, responses, errors and notifications
 - Automatic type safety for requests and responses
 - No dependencies; just one peer dependency on Zod (see compatibility table below).
+- Uses `zod/v4-mini` internally for minimal bundle size impact.
 
-### Supported Zod Versions
+### Schema Validation Libraries
 
-| zod-jsonrpc Version | Zod Version | Zod Import | Notes |
-|---------------------|-------------|------------|-------|
-| v3.0.0+ | `^3.25.0` | `import { z } from 'zod/v4'` | Uses Zod v4 API |
-| v2.1.0 | `^3.0.0` | `import { z } from 'zod'` | Legacy Zod API support | 
+`zod-jsonrpc` uses `@standard-schema/spec` for schema validation, so you can use any schema validation library that supports the Standard Schema specification, including:
+- Zod
+- Effect Schema
+- Valibot
+- ArkType
+- ...and [more](https://standardschema.dev/#what-schema-libraries-implement-the-spec)!
 
 ## Installation
 

@@ -163,7 +163,18 @@ describe('server.method.resultSchema', () => {
       id: 1,
       method: 'invalidResult',
     });
-    expect(result).toMatchObject({ jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error' } });
+    expect(result).toMatchObject({
+      jsonrpc: '2.0',
+      id: 1,
+      error: {
+        code: -32603,
+        message: 'Internal error: Invalid result',
+        data: {
+          issues: [{ code: 'invalid_type', expected: 'number', path: [], message: 'Invalid input: expected number, received string' }],
+          value: 'test result',
+        },
+      },
+    });
   });
 });
 

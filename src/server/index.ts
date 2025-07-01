@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { StandardSchemaV1 } from '@standard-schema/spec';
 import { createClient } from '../client/index.js';
 import { SendRequestFn } from '../client/types.js';
 import {
@@ -13,6 +13,7 @@ import {
   type ResponseObject,
 } from '../jsonrpc/index.js';
 import { type AnyServerMethodDef, method, type ServerDefToClientDef } from '../method/index.js';
+import { parse, safeParse } from '../validator/index.js';
 import { buildErrorResponse } from './buildErrorResponse.js';
 import type { Server, ServerDef } from './types.js';
 
@@ -31,11 +32,11 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs): Server<TD
       if (Array.isArray(request)) return handleArrayRequest(methods, request);
 
       // Otherwise, attempt to handle it as a single request
-      const { data: singleRequest, error: invalidRequestError } = JSONRPCRequestSchema.safeParse(request);
+      const { data: singleRequest, issues: invalidRequestIssues } = safeParse(JSONRPCRequestSchema, request);
 
       // Return an error response if the single request is invalid
-      if (invalidRequestError) return buildErrorResponse(
-        JSONRPCError.InvalidRequest({ data: invalidRequestError }),
+      if (invalidRequestIssues) return buildErrorResponse(
+        JSONRPCError.InvalidRequest({ data: { issues: invalidRequestIssues } }),
         null
       );
 
@@ -83,11 +84,11 @@ export function createServer<TDefs extends ServerDef>(methods: TDefs): Server<TD
  */
 async function handleArrayRequest<TDefs extends ServerDef>(methods: TDefs, request: BatchRequestObject): Promise<ResponseObject> {
   // Parse the batch request
-  const { data: batchRequest, error: invalidRequestError } = JSONRPCRequestBatchSchema.safeParse(request);
+  const { data: batchRequest, issues: invalidRequestIssues } = safeParse(JSONRPCRequestBatchSchema, request);
 
   // Return an error response if the batch request is invalid
-  if (invalidRequestError) return buildErrorResponse(
-    JSONRPCError.InvalidRequest({ message: 'Invalid batch request', data: invalidRequestError }),
+  if (invalidRequestIssues) return buildErrorResponse(
+    JSONRPCError.InvalidRequest({ message: 'Invalid batch request', data: { issues: invalidRequestIssues } }),
     null
   );
 
@@ -97,7 +98,7 @@ async function handleArrayRequest<TDefs extends ServerDef>(methods: TDefs, reque
   );
 
   // Filter out any undefined responses (to notifications), and return the validated batch response
-  return JSONRPCResponseBatchSchema.parse(
+  return parse(JSONRPCResponseBatchSchema, 
     responses.filter((r) => r !== undefined)
   );
 }
@@ -128,14 +129,14 @@ async function parseRequestAndCallMethod<TDefs extends ServerDef>(
   }
 
   // Parse the request params
-  const { data: params, error: paramsError } = method.paramsSchema.safeParse(request.params);
+  const { data: params, issues: paramsIssues } = safeParse(method.paramsSchema, request.params);
   // Handle invalid params errors
-  if (paramsError) {
+  if (paramsIssues) {
     return shouldReturnResponse
       ? buildErrorResponse(
           JSONRPCError.InvalidParams({
             message: `Invalid params for method ${request.method}`,
-            data: paramsError,
+            data: { issues: paramsIssues, value: request.params },
           }),
           request.id
         )
@@ -156,12 +157,14 @@ async function parseRequestAndCallMethod<TDefs extends ServerDef>(
  */
 async function callMethod<TDef extends AnyServerMethodDef>(
   method: TDef,
-  params: z.infer<TDef['paramsSchema']>,
+  params: StandardSchemaV1.InferInput<TDef['paramsSchema']>,
   id?: JSONRPCRequest['id']
 ) {
   try {
     const result = await method.handler(params);
-    return JSONRPCResponseSchema.parse({ result: z.parse(method.resultSchema, result), id });
+    const { data: resultData, issues: resultIssues } = safeParse(method.resultSchema, result);
+    if (resultIssues) throw JSONRPCError.InternalError({ message: 'Invalid result', data: { issues: resultIssues, value: result } });
+    return parse(JSONRPCResponseSchema, { result: resultData, id });
   } catch (error) {
     return buildErrorResponse(error, id);
   }

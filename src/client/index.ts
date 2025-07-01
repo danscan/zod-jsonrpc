@@ -1,6 +1,7 @@
-import { z } from 'zod/v4';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { JSONRPCError } from '../jsonrpc/JSONRPCError.js';
 import { JSONRPCRequestSchema, JSONRPCResponseSchema } from '../jsonrpc/JSONRPCSchemas.js';
+import { parse, safeParse } from '../validator/index.js';
 import { batch, type BatchContext, type BatchRequestConfig } from './batch.js';
 import type { Client, ClientDef, SendRequestFn } from './types.js';
 
@@ -23,23 +24,23 @@ export function createClient<TDef extends ClientDef>(defs: TDef, sendRequest: Se
 async function callMethod<TDef extends ClientDef, TMethodName extends keyof TDef>(
   defs: TDef,
   methodName: TMethodName,
-  params: z.infer<TDef[TMethodName]['paramsSchema']>,
+  params: StandardSchemaV1.InferInput<TDef[TMethodName]['paramsSchema']>,
   sendRequest: SendRequestFn,
-): Promise<z.infer<TDef[TMethodName]['resultSchema']>> {
-  const request = JSONRPCRequestSchema.parse({
+): Promise<StandardSchemaV1.InferOutput<TDef[TMethodName]['resultSchema']>> {
+  const request = parse(JSONRPCRequestSchema, {
     jsonrpc: '2.0',
     method: methodName,
-    params: defs[methodName].paramsSchema.parse(params),
+    params: parse(defs[methodName].paramsSchema, params),
     id: crypto.randomUUID(),
   });
 
   const responseObject = await sendRequest(request);
 
-  const { data: response, error: responseError } = JSONRPCResponseSchema.safeParse(responseObject);
-  if (responseError) throw JSONRPCError.ParseError({ message: `Error parsing response`, data: responseError });
+  const { data: response, issues: responseIssues } = safeParse(JSONRPCResponseSchema, responseObject);
+  if (responseIssues) throw JSONRPCError.ParseError({ message: `Error parsing response`, data: { issues: responseIssues, value: responseObject } });
 
   try {
-    return defs[methodName].resultSchema.parse(response.result);
+    return parse(defs[methodName].resultSchema, response.result);
   } catch (error) {
     throw JSONRPCError.InternalError({ message: `Invalid result for method ${String(methodName)}`, data: error });
   }

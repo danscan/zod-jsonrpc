@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // Any types for use in generic parameters
 export type AnyClientMethodDef = ClientMethodDef<any, any>;
@@ -8,11 +8,11 @@ export type AnyServerMethodHandler = ServerMethodHandler<any, any>;
 /** A type-safe client-side method definition. */
 export interface ClientMethodDef<
   TParams extends MethodParams,
-  TResult extends z.ZodType
+  TResult extends StandardSchemaV1
 > {
-  /** The zod schema of the method parameters */
+  /** The schema of the method parameters */
   paramsSchema: TParams;
-  /** The zod schema of the method result */
+  /** The schema of the method result */
   resultSchema: TResult;
   /** Takes a server method handler and returns an implemented ServerMethodDef */
   implement: (handler: ServerMethodHandler<TParams, TResult>) => ServerMethodDef<TParams, TResult>;
@@ -21,7 +21,7 @@ export interface ClientMethodDef<
 /** A type-safe server-side method definition. */
 export interface ServerMethodDef<
   TParams extends MethodParams,
-  TResult extends z.ZodType
+  TResult extends StandardSchemaV1
 > extends Omit<ClientMethodDef<TParams, TResult>, 'implement'> {
   /** The handler of the method */
   handler: ServerMethodHandler<TParams, TResult>;
@@ -30,16 +30,14 @@ export interface ServerMethodDef<
 /** A type-safe server-side method handler. */
 export type ServerMethodHandler<
   TParams extends MethodParams,
-  TResult extends z.ZodType
-> = (params: z.infer<TParams>) => MaybePromise<z.infer<TResult>>;
+  TResult extends StandardSchemaV1
+> = (params: StandardSchemaV1.InferInput<TParams>) => MaybePromise<StandardSchemaV1.InferOutput<TResult>>;
 
 /** Valid params types for methods */
-export type MethodParams =
-  | z.ZodVoid
-  | z.ZodTuple
-  | z.ZodArray
-  | z.ZodObject
-  | z.ZodDiscriminatedUnion;
+export type MethodParams<T extends
+  | Record<string, unknown>
+  | unknown[]
+  | void = any> = StandardSchemaV1<T, T>;
 
 // –
 // Utility types

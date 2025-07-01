@@ -1,10 +1,20 @@
 {
   "name": "@danscan/zod-jsonrpc",
-  "version": "3.0.6",
-  "description": "Create JSON-RPC 2.0-compliant clients and servers that use Zod to validate requests and responses.",
+  "version": "3.1.0",
   "repository": "https://github.com/danscan/zod-jsonrpc",
-  "homepage": "https://github.com/danscan/zod-jsonrpc",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "dependencies": {
+    "@standard-schema/spec": "^1.0.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
   "bugs": "https://github.com/danscan/zod-jsonrpc/issues",
+  "description": "Create JSON-RPC 2.0-compliant clients and servers that use Zod to validate requests and responses.",
+  "homepage": "https://github.com/danscan/zod-jsonrpc",
   "keywords": [
     "json-rpc",
     "jsonrpc",
@@ -22,15 +32,6 @@
     "build": "bun run tsc",
     "prepare": "bun run build"
   },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.0.0"
-  },
-  "peerDependencies": {
-    "zod": "^3.25.00"
-  },
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "type": "module"
+  "type": "module",
+  "types": "dist/index.d.ts"
 }

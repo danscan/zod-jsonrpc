@@ -12,7 +12,7 @@ export type ServerDef = Record<string, AnyServerMethodDef>;
  */
 export type Server<TDef extends ServerDef> = {
   /** Handles a JSON-RPC 2.0 request. */
-  request: (request: RequestObject) => Promise<ResponseObject>;
+  request: (request: RequestObject) => Promise<ResponseObject | null>;
   /** Extends the server with additional methods. */
   extend: <TNewDefs extends ServerDef>(defs: TNewDefs) => Server<TDef & TNewDefs>;
   /** Creates a client for the server. */

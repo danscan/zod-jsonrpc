@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod/v4-mini';
 import { JSONRPCError } from './JSONRPCError.js';
 
 /**
@@ -17,7 +17,7 @@ export const JSONRPCRequestSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0').prefault('2.0'),
+  jsonrpc: z.prefault(z.literal('2.0'), '2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -35,7 +35,7 @@ export const JSONRPCRequestSchema = z.object({
    * - by-position: params MUST be an Array, containing the values in the Server expected order.
    * - by-name: params MUST be an Object, with member names that match the Server expected parameter names. The absence of expected names MAY result in an error being generated. The names MUST match exactly, including case, to the method's expected parameters.
    */
-  params: z.union([z.array(z.any()), z.record(z.string(), z.any())]).optional(),
+  params: z.optional(z.union([z.array(z.any()), z.record(z.string(), z.any())])),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -51,7 +51,7 @@ export const JSONRPCRequestSchema = z.object({
    * A Notification is a Request object without an "id" member. A Request object that is a Notification signifies the Client's lack of interest in the corresponding Response object, and as such no Response object needs to be returned to the client. The Server MUST NOT reply to a Notification, including those that are within a batch request.
    * Notifications are not confirmable by definition, since they do not have a Response object to be returned. As such, the Client would not be aware of any errors (like e.g. "Invalid params","Internal error").
    */
-  id: z.union([z.number(), z.string(), z.null()]).optional(),
+  id: z.optional(z.union([z.number(), z.string(), z.null()])),
 });
 
 /**
@@ -70,7 +70,7 @@ export const JSONRPCResponseSchema = z.object({
    * 
    * A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0".
    */
-  jsonrpc: z.literal('2.0').prefault('2.0'),
+  jsonrpc: z.prefault(z.literal('2.0'), '2.0'),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -79,7 +79,7 @@ export const JSONRPCResponseSchema = z.object({
    * This member MUST NOT exist if there was an error invoking the method.
    * The value of this member is determined by the method invoked on the Server.
    */
-  result: z.any().optional(),
+  result: z.optional(z.any()),
 
   /**
    * JSON-RPC 2.0 Specification:
@@ -88,21 +88,32 @@ export const JSONRPCResponseSchema = z.object({
    * This member MUST NOT exist if there was no error triggered during invocation.
    * The value for this member MUST be an Object as defined in section 5.1. [Implemented in JSONRPC2Error]
    */
-  error: z.instanceof(JSONRPCError)
-    .or(z.record(z.string(), z.any())
-      .transform((e: {
-        code?: number;
-        message?: string;
-        data?: any;
-      }) => new JSONRPCError(
-        e.code ?? -32603,
-        e.message ?? 'Internal error',
-        e.data ?? { error: e },
-      )),
+  error: z.optional(
+    z.pipe(
+      z.catch(
+        z.pipe(
+          z.union([
+            z.instanceof(JSONRPCError),
+            z.record(z.string(), z.any())
+          ]),
+          z.transform((e: {
+            code?: number;
+            message?: string;
+            data?: any;
+          }) => new JSONRPCError(
+            e.code ?? -32603,
+            e.message ?? 'Internal error',
+            e.data ?? { error: e },
+          ))
+        ),
+        (ctx) => JSONRPCError.ParseError({ message: 'Invalid error object', data: { issues: ctx.issues, value: ctx.value } })
+      ),
+      z.pipe(
+        z.instanceof(JSONRPCError),
+        z.transform(e => e.toJSON())
+      )
     )
-    .catch(e => JSONRPCError.ParseError({ message: 'Invalid error object', data: e }))
-    .pipe(z.instanceof(JSONRPCError).transform(e => e.toJSON()))
-    .optional(),
+  ),
 
   /**
    * JSON-RPC 2.0 Specification:
