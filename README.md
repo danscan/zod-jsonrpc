@@ -4,7 +4,7 @@ Create type-safe JSON-RPC API clients and servers in JS/TS using any transport.
 
 ## Features
 
-- **JSON-RPC 2.0-compliant** - Full specification compliance
+- **JSON-RPC 2.0-compliant** - Full specification compliance, including batch requests, errors, and notifications
 - **Multiple schema validation libraries** - Uses `@standard-schema/spec` to support Zod, Effect Schema, Valibot, ArkType, and more
 - **Transport-agnostic** - Works with HTTP, WebSockets, IPC, or any custom transport layer
 - **Automatic request handling** - Batch requests, notifications, and error responses handled automatically
