@@ -255,7 +255,7 @@ describe('server.method.resultSchema', () => {
         code: -32603,
         message: 'Internal error: Invalid result',
         data: {
-          issues: [{ code: 'invalid_type', expected: 'number', path: [], message: 'Invalid input: expected number, received string' }],
+          issues: [{ code: 'invalid_type', expected: 'number', path: [], message: 'Invalid input' }],
           value: 'test result',
         },
       },

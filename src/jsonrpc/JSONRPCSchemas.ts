@@ -1,5 +1,5 @@
-import * as z from 'zod/v4-mini';
-import { JSONRPCError, JSONRPCErrorSchema } from './JSONRPCError.js';
+import * as z from 'zod/mini';
+import { JSONRPCErrorSchema } from './JSONRPCError.js';
 
 /**
  * JSON-RPC 2.0 Request Object Specification:

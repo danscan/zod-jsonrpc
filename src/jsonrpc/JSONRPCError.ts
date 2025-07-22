@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 // Type for optional error configuration using statics
 type ErrorConfig = { message?: string; data?: unknown };
