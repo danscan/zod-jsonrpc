@@ -1,5 +1,5 @@
-import { z } from 'zod/v4-mini';
-import { JSONRPCError } from './JSONRPCError.js';
+import * as z from 'zod/v4-mini';
+import { JSONRPCError, JSONRPCErrorSchema } from './JSONRPCError.js';
 
 /**
  * JSON-RPC 2.0 Request Object Specification:
@@ -89,30 +89,7 @@ export const JSONRPCResponseSchema = z.object({
    * The value for this member MUST be an Object as defined in section 5.1. [Implemented in JSONRPC2Error]
    */
   error: z.optional(
-    z.pipe(
-      z.catch(
-        z.pipe(
-          z.union([
-            z.instanceof(JSONRPCError),
-            z.record(z.string(), z.any())
-          ]),
-          z.transform((e: {
-            code?: number;
-            message?: string;
-            data?: any;
-          }) => new JSONRPCError(
-            e.code ?? -32603,
-            e.message ?? 'Internal error',
-            e.data ?? { error: e },
-          ))
-        ),
-        (ctx) => JSONRPCError.ParseError({ message: 'Invalid error object', data: { issues: ctx.issues, value: ctx.value } })
-      ),
-      z.pipe(
-        z.instanceof(JSONRPCError),
-        z.transform(e => e.toJSON())
-      )
-    )
+    JSONRPCErrorSchema,
   ),
 
   /**

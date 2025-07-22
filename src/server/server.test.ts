@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { z } from 'zod/v4';
+import { z } from 'zod/mini';
 import { createServer } from '.';
 import { JSONRPCError } from '../jsonrpc';
 import { method } from '../method';
@@ -273,7 +273,10 @@ describe('server.createClient', () => {
   it('should allow a schema with transformation (different input and output types) as params schema', async () => {
     const transformServer = createServer({
       transform: method({
-        paramsSchema: z.tuple([z.string()]).transform(([val]) => ({ transformed: val })),
+        paramsSchema: z.pipe(
+          z.tuple([z.string()]),
+          z.transform(([val]) => ({ transformed: val })),
+        ),
         resultSchema: z.boolean(),
       }, (params) => params.transformed === 'test'),
     });

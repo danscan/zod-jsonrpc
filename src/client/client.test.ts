@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { z } from 'zod/v4';
+import { z } from 'zod/mini';
 import { createClient } from '.';
 import { JSONRPCError, RequestObject } from '../jsonrpc';
 import { method } from '../method';

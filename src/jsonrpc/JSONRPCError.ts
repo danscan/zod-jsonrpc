@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Type for optional error configuration using statics
 type ErrorConfig = { message?: string; data?: unknown };
 
@@ -61,3 +63,13 @@ function formatErrorMessage(errorType: string, message?: string) {
     ? `${errorType}: ${message}`
     : errorType;
 }
+
+// ----------------------------------------------
+// Schemas
+// ----------------------------------------------
+
+export const JSONRPCErrorSchema = z.object({
+  code: z.number(),
+  message: z.string(),
+  data: z.unknown(),
+});

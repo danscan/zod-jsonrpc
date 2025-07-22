@@ -34,7 +34,7 @@ npm add @danscan/zod-jsonrpc
 
 ```typescript
 import { createServer, createClient, method } from '@danscan/zod-jsonrpc';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 // Define methods
 const greet = method({
@@ -88,7 +88,7 @@ Start by creating a server with your methods:
 
 ```typescript
 import { createServer, method, JSONRPCError } from '@danscan/zod-jsonrpc';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 const server = createServer({
   add: method({
